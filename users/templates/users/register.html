@@ -1,0 +1,121 @@
+{% extends "users/base.html" %}
+{% block content %}
+    <div class="form-content my-4 p-4">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-6">
+                    <div class="card shadow-lg border-0 rounded-lg mt-0 mb-3">
+                        <div class="card-header text-center">
+                            <h3 class="font-weight-light my-4">Criar uma conta</h3>
+                        </div>
+
+                        {% if form.errors %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>Erro(s) ao processar o formulário:</strong>
+                            <ul class="mb-0">
+                                {% for key, value in form.errors.items %}
+                                    <li>{{ value }}</li>
+                                {% endfor %}
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endif %}
+
+                        <div class="card-body">
+                            <form method="POST">
+                                {% csrf_token %}
+
+                                <!-- Campos do User padrão -->
+                                <div class="form-row mb-3">
+                                    <div class="col-md-10 offset-md-1">
+                                        <div class="form-group">
+                                            <label for="id_first_name" class="small mb-1">Primeiro nome</label>
+                                            {{ form.first_name }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row mb-3">
+                                    <div class="col-md-10 offset-md-1">
+                                        <div class="form-group">
+                                            <label for="id_last_name" class="small mb-1">Sobrenome</label>
+                                            {{ form.last_name }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row mb-3">
+                                    <div class="col-md-10 offset-md-1">
+                                        <div class="form-group">
+                                            <label for="id_username" class="small mb-1">Username</label>
+                                            {{ form.username }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                 <!-- Campos adicionais do Profile -->
+                                 <div class="form-row mb-3">
+                                    <div class="col-md-10 offset-md-1">
+                                        <div class="form-group">
+                                            <label for="id_age" class="small mb-1">Idade</label>
+                                            {{ form.age }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row mb-3">
+                                    <div class="col-md-10 offset-md-1">
+                                        <div class="form-group">
+                                            <label for="id_weight" class="small mb-1">Peso</label>
+                                            {{ form.weight }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row mb-3">
+                                    <div class="col-md-10 offset-md-1">
+                                        <div class="form-group">
+                                            <label for="id_date_of_birth" class="small mb-1">Data de Nascimento</label>
+                                            {{ form.date_of_birth }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row mb-3">
+                                    <div class="col-md-10 offset-md-1">
+                                        <div class="form-group">
+                                            <label for="id_email" class="small mb-1">Email</label>
+                                            {{ form.email }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row mb-3">
+                                    <div class="col-md-10 offset-md-1">
+                                        <div class="form-group">
+                                            <label for="id_password1" class="small mb-1">Senha</label>
+                                            {{ form.password1 }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row mb-3">
+                                    <div class="col-md-10 offset-md-1">
+                                        <div class="form-group">
+                                            <label for="id_password2" class="small mb-1">Confirmar senha</label>
+                                            {{ form.password2 }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                               
+
+                                <div class="form-row mb-3 justify-content-center">
+                                    <div class="col-md-10 offset-md-1">
+                                        <div class="form-group mt-0 mb-1">
+                                            <button type="submit" class="btn btn-dark btn-block">Cadastrar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
