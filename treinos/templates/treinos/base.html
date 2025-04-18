@@ -1,0 +1,28 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Hardcore Fitness{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'treinos/css/main.css' %}">
+</head>
+<body>
+  <div class="wrapper">
+    <nav class="sidebar">
+      <div class="brand">🏋️ <strong>Hardcore</strong></div>
+      <ul>
+        <li><a href="{% url 'treinos:lista_treinos' %}">Meus Treinos</a></li>
+        <li><a href="{% url 'treinos:novo_treino' %}">+ Novo Treino</a></li>
+        <li><a href="{% url 'treinos:historico_treino' %}">Histórico</a></li>
+      </ul>
+    </nav>
+    <main class="content">
+      <header><h1>{% block header %}{% endblock %}</h1></header>
+      <section class="main-area">
+        {% block content %}{% endblock %}
+      </section>
+    </main>
+  </div>
+</body>
+</html>

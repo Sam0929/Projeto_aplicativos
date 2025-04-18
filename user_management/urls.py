@@ -12,6 +12,8 @@ from users.forms import LoginForm
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    
+    path('treinos/', include('treinos.urls')),
 
     path('', include('users.urls')),
 

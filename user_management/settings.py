@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'users.apps.UserConfig',
     'social_django',
+    'treinos',
 ]
 
 MIDDLEWARE = [

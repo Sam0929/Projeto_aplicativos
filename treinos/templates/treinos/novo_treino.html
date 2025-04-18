@@ -1,0 +1,53 @@
+{% extends 'treinos/base.html' %}
+
+{% block content %}
+<h2>Novo Treino</h2>
+<form method="post" action="{% url 'salvar_treino' %}">
+  {% csrf_token %}
+  
+  <label for="nome_treino">Nome do Treino:</label>
+  <input type="text" name="nome_treino" required><br><br>
+
+  <div id="grupos-musculares-container"></div>
+
+  <button type="button" onclick="adicionarGrupoMuscular()">+ Adicionar Grupo Muscular</button><br><br>
+  <input type="submit" value="Salvar Treino">
+</form>
+
+<script>
+let grupoIndex = 0;
+
+function adicionarGrupoMuscular() {
+  const container = document.getElementById('grupos-musculares-container');
+  const grupoHTML = `
+    <div class="grupo-muscular" style="border:1px solid #ccc; padding:10px; margin-bottom:20px;">
+      <label>Nome do Grupo Muscular:</label>
+      <input type="text" name="grupos[${grupoIndex}][nome]" required><br><br>
+
+      <div class="exercicios-container" id="exercicios-${grupoIndex}"></div>
+
+      <button type="button" onclick="adicionarExercicio(${grupoIndex})">+ Adicionar Exercício</button>
+    </div>
+  `;
+  container.insertAdjacentHTML('beforeend', grupoHTML);
+  grupoIndex++;
+}
+
+function adicionarExercicio(grupoId) {
+  const container = document.getElementById(`exercicios-${grupoId}`);
+  const exercicioHTML = `
+    <div class="exercicio" style="margin-bottom:10px;">
+      <label>Nome do Exercício:</label>
+      <input type="text" name="grupos[${grupoId}][exercicios][][nome]" required>
+
+      <label>Séries:</label>
+      <input type="text" name="grupos[${grupoId}][exercicios][][series]" required>
+
+      <label>Descanso (s):</label>
+      <input type="number" name="grupos[${grupoId}][exercicios][][descanso]" required><br>
+    </div>
+  `;
+  container.insertAdjacentHTML('beforeend', exercicioHTML);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'treinos/base.html' %}
+{% block title %}Histórico{% endblock %}
+{% block header %}Histórico de Treinos{% endblock %}
+{% block content %}
+<div class="history-list">
+  {% for treino in treinos %}
+  <div class="history-item">
+    <h3>{{ treino.nome }}</h3>
+    <small>{{ treino.criado_em|date:'d/m/Y H:i' }}</small>
+  </div>
+  {% empty %}
+  <p class="empty">Nenhum histórico disponível.</p>
+  {% endfor %}
+</div>
+{% endblock %}

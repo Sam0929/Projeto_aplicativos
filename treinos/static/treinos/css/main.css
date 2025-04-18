@@ -1,0 +1,38 @@
+:root {
+    --sidebar-width: 220px;
+    --primary: #ff3d00;
+    --bg-dark: #121212;
+    --bg-light: #1e1e1e;
+    --text: #e0e0e0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: sans-serif; color: var(--text); background: var(--bg-dark); }
+  .wrapper { display: flex; height: 100vh; }
+  .sidebar { width: var(--sidebar-width); background: var(--bg-light); padding: 20px; }
+  .sidebar .brand { font-size: 1.4em; color: var(--primary); margin-bottom: 2em; }
+  .sidebar ul { list-style: none; }
+  .sidebar li { margin: 1em 0; }
+  .sidebar a { text-decoration: none; color: var(--text); font-size: 1.1em; }
+  .sidebar a:hover { color: var(--primary); }
+  .content { flex: 1; display: flex; flex-direction: column; }
+  header { padding: 20px; background: var(--bg-light); }
+  header h1 { color: var(--primary); }
+  .main-area { padding: 20px; overflow-y: auto; }
+  
+  .card-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1em; }
+  .card { background: var(--bg-light); padding: 1em; border-radius: 8px; cursor: pointer; transition: transform .2s; }
+  .card:hover { transform: scale(1.02); }
+  .card h2 { margin-bottom: .5em; }
+  .empty { text-align: center; color: #888; margin-top: 2em; }
+  .detail { background: var(--bg-light); padding: 1em; border-radius: 8px; }
+  .actions { margin-top: 1em; }
+  .btn { text-decoration: none; display: inline-block; padding: .5em 1em; border-radius: 6px; margin-right: .5em; }
+  .btn.edit { background: #ffc107; color: #000; }
+  .btn.delete { background: #d32f2f; }
+  .btn.start { background: #388e3c; }
+  .form input, .form textarea { width: 100%; margin-bottom: 1em; padding: .8em; border: none; border-radius: 4px; background: var(--bg-light); color: var(--text); }
+  .form textarea { resize: vertical; height: 100px; }
+  .btn.save { background: var(--primary); color: #000; }
+  .history-list { display: flex; flex-direction: column; gap: .5em; }
+  .history-item { background: var(--bg-light); padding: .8em; border-radius: 6px; }
+  .history-item small { color: #888; }

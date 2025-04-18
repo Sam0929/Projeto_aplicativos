@@ -1,0 +1,15 @@
+{% extends 'treinos/base.html' %}
+{% block title %}Meus Treinos{% endblock %}
+{% block header %}Meus Treinos{% endblock %}
+{% block content %}
+<div class="card-container">
+  {% for treino in treinos %}
+  <div class="card" onclick="location.href='{% url 'treinos:detalhe_treino' treino.id %}'">
+    <h2>{{ treino.nome }}</h2>
+    <p>{{ treino.descricao|truncatechars:80 }}</p>
+  </div>
+  {% empty %}
+  <p class="empty">Nenhum treino cadastrado.</p>
+  {% endfor %}
+</div>
+{% endblock %}

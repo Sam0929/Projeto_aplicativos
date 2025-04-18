@@ -1,0 +1,14 @@
+{% extends 'treinos/base.html' %}
+{% block title %}Detalhes{% endblock %}
+{% block header %}Detalhes do Treino{% endblock %}
+{% block content %}
+<div class="detail">
+  <h2>{{ treino.nome }}</h2>
+  <p>{{ treino.descricao }}</p>
+  <div class="actions">
+    <a class="btn edit" href="#">✏️ Editar</a>
+    <a class="btn delete" href="#">🗑️ Excluir</a>
+    <a class="btn start" href="#">▶️ Iniciar</a>
+  </div>
+</div>
+{% endblock %}
