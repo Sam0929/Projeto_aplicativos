@@ -36,3 +36,40 @@
   .history-list { display: flex; flex-direction: column; gap: .5em; }
   .history-item { background: var(--bg-light); padding: .8em; border-radius: 6px; }
   .history-item small { color: #888; }
+
+  /* Grupos e Exercícios */
+.grupo-card {
+    background: var(--bg-light);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-left: 3px solid var(--primary);
+  }
+  
+  .exercicio-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 1rem;
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+  }
+  
+  .exercicio-item input {
+    background: var(--bg-dark) !important;
+    padding: 0.5rem !important;
+  }
+  
+  .meta-info {
+    display: flex;
+    gap: 1rem;
+    margin: 0.5rem 0;
+    color: #888;
+    font-size: 0.9em;
+  }
+  
+  .carga {
+    color: var(--primary);
+    font-weight: bold;
+  }

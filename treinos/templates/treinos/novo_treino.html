@@ -1,53 +1,336 @@
 {% extends 'treinos/base.html' %}
-
+{% block title %}Novo Treino{% endblock %}
+{% block header %}Criar Novo Treino{% endblock %}
 {% block content %}
-<h2>Novo Treino</h2>
-<form method="post" action="{% url 'salvar_treino' %}">
-  {% csrf_token %}
-  
-  <label for="nome_treino">Nome do Treino:</label>
-  <input type="text" name="nome_treino" required><br><br>
+<div class="container">
+  <form class="treino-form" method="post" id="mainForm">
+    {% csrf_token %}
+    
+    <!-- Título do Treino -->
+    <div class="input-field header-input">
+      <input type="text" name="nome_treino" placeholder="Nome do Treino" required>
+      <span class="underline-accent"></span>
+    </div>
 
-  <div id="grupos-musculares-container"></div>
+    <!-- Contêiner de Grupos Musculares -->
+    <div id="grupos-container">
+      <!-- Grupo Inicial (índice 0) -->
+      <div class="grupo-card" data-grupo-index="0">
+        <div class="grupo-header">
+          <h3 class="grupo-title">Grupo Muscular 1</h3>
+          <div class="grupo-actions">
+            <button type="button" class="icon-btn fixar-btn" onclick="fixarGrupo(this)">✓</button>
+          </div>
+        </div>
+        <div class="input-field group-name-field">
+          <label class="field-label">Nome do Grupo</label>
+          <input type="text" name="grupos[]" placeholder="Ex: Peito" required>
+        </div>
+        <div class="exercicios-container">
+          <!-- Exercício inicial no grupo 0 -->
+          <div class="exercicio-item" data-exercicio-index="0">
+            <div class="exercicio-label">Exercício 1</div>
+            <div class="exercicio-actions">
+              <button type="button" class="icon-btn delete-exercicio-btn" onclick="removerExercicio(this)">🗑️</button>
+            </div>
+            <div class="input-field exer-name-field">
+              <label class="field-label">Nome do Exercício</label>
+              <input type="text" name="exercicios[0][nome]" placeholder="Ex: Supino" required>
+            </div>
+            <div class="exercise-details-grid">
+              <div class="series-reps-container">
+                <div class="input-field small">
+                  <label class="field-label">Séries</label>
+                  <input type="number" name="exercicios[0][series]" placeholder="4" required>
+                </div>
+                <span class="x">x</span>
+                <div class="input-field small">
+                  <label class="field-label">Reps</label>
+                  <input type="number" name="exercicios[0][reps]" placeholder="8" required>
+                </div>
+              </div>
+              <div class="input-field small descanso-field">
+                <label class="field-label">Descanso (s)</label>
+                <input type="number" name="exercicios[0][descanso]" placeholder="60" required>
+                <span class="seg">seg</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn ghost add-exercicio" onclick="adicionarExercicio(this)">+ Exercício</button>
+      </div>
+    </div>
 
-  <button type="button" onclick="adicionarGrupoMuscular()">+ Adicionar Grupo Muscular</button><br><br>
-  <input type="submit" value="Salvar Treino">
-</form>
+    <!-- Ações de Formulário -->
+    <div class="form-footer">
+      <button type="button" class="btn ghost" onclick="adicionarGrupo()">+ Novo Grupo</button>
+      <button type="submit" class="btn primary">Salvar Treino</button>
+    </div>
+  </form>
+</div>
+
+<style>
+  /* Layout aumentado e aprimorado */
+  .container {
+    max-width: 1000px;
+    margin: 60px auto;
+    padding: 0 30px;
+  }
+  .treino-form {
+    background: var(--bg-light);
+    border-radius: 20px;
+    padding: 3.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+  .header-input input {
+    font-size: 2rem;
+    font-weight: bold;
+    padding: 1.2rem 0;
+    color: #fff;
+  }
+  .underline, .underline-accent { display: none; }
+
+  .field-label {
+    display: block;
+    font-size: 0.9rem;
+    color: #aaa;
+    margin-bottom: 0.5rem;
+  }
+
+  .grupo-card {
+    background: #1f1f1f;
+    border-radius: 16px;
+    padding: 3rem;
+    margin-bottom: 3.5rem;
+    border-left: 6px solid var(--primary);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  .grupo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+  }
+  .grupo-title {
+    font-size: 1.6rem;
+    color: var(--primary);
+    font-weight: 700;
+  }
+  .icon-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.4rem;
+    color: var(--text);
+    transition: transform 0.2s;
+  }
+  .icon-btn:hover { transform: scale(1.2); color: var(--primary); }
+
+  .input-field input {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 10px;
+    padding: 1.1rem;
+    width: 100%;
+    font-size: 1.1rem;
+    color: #fff;
+  }
+  .input-field input::placeholder {
+    color: #555;
+  }
+  .input-field.small input {
+    padding: 0.9rem;
+    font-size: 1rem;
+  }
+
+  .exercicio-item {
+    position: relative;
+    background: #292929;
+    border-radius: 12px;
+    padding: 2.2rem;
+    margin-bottom: 2.2rem;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+  }
+  .exercicio-label {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+  .exercicio-actions {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+  }
+
+  .exercise-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.8rem;
+    margin-top: 1.8rem;
+  }
+
+  .series-reps-container {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  /* Séries e reps maiores */
+  .series-reps-container .input-field.small input {
+    width: 60px;
+  }
+  .series-reps-container .x {
+    color: var(--primary);
+    font-weight: 700;
+    margin: 0 0.4rem;
+  }
+
+  /* Descanso com seg ao lado */
+  .descanso-field {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .descanso-field input {
+    width: 70px;
+    flex: 1;
+  }
+  .seg {
+    font-size: 0.9rem;
+    color: var(--primary);
+  }
+
+  /* Botões padronizados e mais elegantes */
+  .btn {
+    border-radius: 8px;
+    padding: 0.8rem 1.2rem;
+    font-size: 1rem;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .btn.ghost {
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+  }
+  .btn.ghost:hover {
+    background: rgba(255,61,0,0.1);
+    transform: scale(1.05);
+  }
+  .btn.primary {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+  }
+  .btn.primary:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+  }
+
+  .form-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1.8rem;
+    margin-top: 3.2rem;
+  }
+
+  .grupo-card.fixado {
+    background: rgba(255,61,0,0.08);
+    border-color: var(--primary);
+  }
+  .grupo-card.fixado input {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+</style>
 
 <script>
-let grupoIndex = 0;
+  let grupoCount = 1;
 
-function adicionarGrupoMuscular() {
-  const container = document.getElementById('grupos-musculares-container');
-  const grupoHTML = `
-    <div class="grupo-muscular" style="border:1px solid #ccc; padding:10px; margin-bottom:20px;">
-      <label>Nome do Grupo Muscular:</label>
-      <input type="text" name="grupos[${grupoIndex}][nome]" required><br><br>
+  function adicionarGrupo() {
+    const container = document.getElementById('grupos-container');
+    const idx = grupoCount++;
+    const card = document.createElement('div');
+    card.className = 'grupo-card';
+    card.dataset.grupoIndex = idx;
+    card.innerHTML = `
+      <div class="grupo-header">
+        <h3 class="grupo-title">Grupo Muscular ${idx+1}</h3>
+        <div class="grupo-actions">
+          <button type="button" class="icon-btn fixar-btn" onclick="fixarGrupo(this)">✓</button>
+        </div>
+      </div>
+      <div class="input-field group-name-field">
+        <label class="field-label">Nome do Grupo</label>
+        <input type="text" name="grupos[]" placeholder="Ex: Peito" required>
+      </div>
+      <div class="exercicios-container">
+        ${gerarExercicioHTML(idx, 0)}
+      </div>
+      <button type="button" class="btn ghost add-exercicio" onclick="adicionarExercicio(this)">+ Exercício</button>
+    `;
+    container.appendChild(card);
+  }
 
-      <div class="exercicios-container" id="exercicios-${grupoIndex}"></div>
+  function gerarExercicioHTML(gIdx, eIdx) {
+    return `
+      <div class="exercicio-item" data-exercicio-index="${eIdx}">
+        <div class="exercicio-label">Exercício ${eIdx+1}</div>
+        <div class="exercicio-actions">
+          <button type="button" class="icon-btn delete-exercicio-btn" onclick="removerExercicio(this)">🗑️</button>
+        </div>
+        <div class="input-field exer-name-field">
+          <label class="field-label">Nome do Exercício</label>
+          <input type="text" name="exercicios[${gIdx}][nome]" placeholder="Ex: Supino" required>
+        </div>
+        <div class="exercise-details-grid">
+          <div class="series-reps-container">
+            <div class="input-field small">
+              <label class="field-label">Séries</label>
+              <input type="number" name="exercicios[${gIdx}][series]" placeholder="4" required>
+            </div>
+            <span class="x">x</span>
+            <div class="input-field small">
+              <label class="field-label">Reps</label>
+              <input type="number" name="exercicios[${gIdx}][reps]" placeholder="8" required>
+            </div>
+          </div>
+          <div class="input-field small descanso-field">
+            <label class="field-label">Descanso (s)</label>
+            <input type="number" name="exercicios[${gIdx}][descanso]" placeholder="60" required>
+            <span class="seg">seg</span>
+          </div>
+        </div>
+      </div>`;
+  }
 
-      <button type="button" onclick="adicionarExercicio(${grupoIndex})">+ Adicionar Exercício</button>
-    </div>
-  `;
-  container.insertAdjacentHTML('beforeend', grupoHTML);
-  grupoIndex++;
-}
+  function adicionarExercicio(btn) {
+    const card = btn.closest('.grupo-card');
+    const gIdx = Number(card.dataset.grupoIndex);
+    const cont = card.querySelector('.exercicios-container');
+    const eIdx = cont.querySelectorAll('.exercicio-item').length;
+    cont.insertAdjacentHTML('beforeend', gerarExercicioHTML(gIdx, eIdx));
+  }
 
-function adicionarExercicio(grupoId) {
-  const container = document.getElementById(`exercicios-${grupoId}`);
-  const exercicioHTML = `
-    <div class="exercicio" style="margin-bottom:10px;">
-      <label>Nome do Exercício:</label>
-      <input type="text" name="grupos[${grupoId}][exercicios][][nome]" required>
+  function removerExercicio(btn) {
+    const item = btn.closest('.exercicio-item');
+    const card = btn.closest('.grupo-card');
+    const gIdx = Number(card.dataset.grupoIndex);
+    item.remove();
+    const cont = card.querySelector('.exercicios-container');
+    cont.querySelectorAll('.exercicio-item').forEach((el, i) => {
+      el.dataset.exercicioIndex = i;
+      el.querySelector('.exercicio-label').textContent = `Exercício ${i+1}`;
+      el.querySelector('input[name*="[nome]"]').name = `exercicios[${gIdx}][nome]`;
+      el.querySelector('input[name*="[series]"]').name = `exercicios[${gIdx}][series]`;
+      el.querySelector('input[name*="[reps]"]').name = `exercicios[${gIdx}][reps]`;
+      el.querySelector('input[name*="[descanso]"]').name = `exercicios[${gIdx}][descanso]`;
+    });
+  }
 
-      <label>Séries:</label>
-      <input type="text" name="grupos[${grupoId}][exercicios][][series]" required>
-
-      <label>Descanso (s):</label>
-      <input type="number" name="grupos[${grupoId}][exercicios][][descanso]" required><br>
-    </div>
-  `;
-  container.insertAdjacentHTML('beforeend', exercicioHTML);
-}
+  function fixarGrupo(btn) {
+    const card = btn.closest('.grupo-card');
+    card.classList.toggle('fixado');
+    btn.textContent = card.classList.contains('fixado') ? '✎' : '✓';
+  }
 </script>
 {% endblock %}

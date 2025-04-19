@@ -3,12 +3,37 @@
 {% block header %}Detalhes do Treino{% endblock %}
 {% block content %}
 <div class="detail">
-  <h2>{{ treino.nome }}</h2>
-  <p>{{ treino.descricao }}</p>
+  <div class="header-group">
+    <h2>{{ treino.nome }}</h2>
+    <div class="meta">
+      <span>Criado em: {{ treino.criado_em|date:"d/m/Y" }}</span>
+      {% if treino.ultima_execucao %}
+      <span>Último treino: {{ treino.ultima_execucao|date:"d/m/Y" }}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  {% for grupo in treino.grupomuscular_set.all %}
+  <div class="grupo-card">
+    <h3>{{ grupo.nome }}</h3>
+    <div class="exercicios-list">
+      {% for exercicio in grupo.exercicio_set.all %}
+      <div class="exercicio-item">
+        <div class="exercicio-info">
+          <span class="nome">{{ exercicio.nome }}</span>
+          <span class="detalhes">{{ exercicio.series }}x{{ exercicio.repeticoes }} | {{ exercicio.descanso }}s</span>
+        </div>
+        <span class="carga">{% firstof exercicio.carga_maxima|floatformat:"0" "-" %}kg</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+
   <div class="actions">
-    <a class="btn edit" href="#">✏️ Editar</a>
-    <a class="btn delete" href="#">🗑️ Excluir</a>
-    <a class="btn start" href="#">▶️ Iniciar</a>
+    <a class="btn edit" href="{% url 'treinos:editar_treino' treino.pk %}">✏️ Editar</a>
+    <a class="btn delete" href="{% url 'treinos:excluir_treino' treino.pk %}">🗑️ Excluir</a>
+    <a class="btn start" href="#">▶️ Iniciar</a>
   </div>
 </div>
 {% endblock %}
