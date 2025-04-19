@@ -33,7 +33,7 @@
   <div class="actions">
     <a class="btn edit" href="{% url 'treinos:editar_treino' treino.pk %}">✏️ Editar</a>
     <a class="btn delete" href="{% url 'treinos:excluir_treino' treino.pk %}">🗑️ Excluir</a>
-    <a class="btn start" href="#">▶️ Iniciar</a>
+    <a class="btn start" href="{% url 'treinos:iniciar_treino' treino.pk %}">▶️ Iniciar</a>
   </div>
 </div>
 {% endblock %}

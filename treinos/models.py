@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from datetime import timedelta
+from django.utils import timezone
 
 class Treino(models.Model):
     nome = models.CharField(max_length=100)
@@ -38,4 +39,24 @@ class Exercicio(models.Model):
     descanso = models.PositiveIntegerField()
     carga_maxima = models.FloatField(null=True, blank=True)
     
-    
+class ExecucaoTreino(models.Model):
+    treino      = models.ForeignKey(Treino, on_delete=models.CASCADE)
+    usuario     = models.ForeignKey(User, on_delete=models.CASCADE)
+    data_inicio = models.DateTimeField(default=timezone.now)
+    duracao     = models.DurationField(default=timedelta(0))
+    carga_total = models.FloatField(default=0.0)  # aqui guarda a carga média (ou total, como preferir)
+
+    def __str__(self):
+        return f"{self.treino.nome} em {self.data_inicio:%d/%m/%Y %H:%M}"
+
+    @property
+    def duracao_minutos(self):
+        # Retorna apenas os minutos inteiros
+        return self.duracao.seconds // 60
+
+class ExecucaoExercicio(models.Model):
+    execucao_treino = models.ForeignKey(ExecucaoTreino, on_delete=models.CASCADE)
+    exercicio = models.ForeignKey(Exercicio, on_delete=models.CASCADE)
+    serie = models.PositiveIntegerField()
+    carga_utilizada = models.FloatField()
+    duracao = models.DurationField()

@@ -1,6 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Treino
+from .forms import TreinoForm
+from .models import Treino, GrupoMuscular, Exercicio, ExecucaoTreino, ExecucaoExercicio
+from django.utils.timezone import now
+from datetime import timedelta
+from django.db.models import Max
+
 
 @login_required
 def lista_treinos(request):
@@ -20,18 +25,18 @@ def detalhe_treino(request, pk):
 
 @login_required
 def historico_treino(request):
-    treinos = Treino.objects.filter(usuario=request.user).order_by('-criado_em')
-    return render(request, 'treinos/historico_treino.html', {'treinos': treinos})
+    # busca execuções do usuário, mais recentes primeiro
+    execucoes = (
+        ExecucaoTreino.objects
+        .filter(usuario=request.user)
+        .select_related('treino')
+        .order_by('-data_inicio')
+    )
+    return render(request, 'treinos/historico_treino.html', {
+        'execucoes': execucoes
+    })
 
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from .models import Treino, GrupoMuscular, Exercicio
-from .forms import TreinoForm
 
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from .models import Treino, GrupoMuscular, Exercicio
-from .forms import TreinoForm
 
 @login_required
 def novo_treino(request):
@@ -123,11 +128,74 @@ def excluir_treino(request, pk):
         return redirect('treinos:lista_treinos')
     return render(request, 'treinos/confirmar_exclusao.html', {'treino': treino})
 
+
 @login_required
-def iniciar_treino(request, pk):
-    # carrega o treino (só pra garantir que pertence ao usuário)
-    treino = get_object_or_404(Treino, pk=pk, usuario=request.user)
-    # por enquanto, não muda nada — só salva para "registrar" execução
-    treino.save()
-    # redireciona de volta pro detalhe
-    return redirect('treinos:detalhe_treino', pk=pk)
+def iniciar_treino(request, treino_id):
+    treino = get_object_or_404(Treino, id=treino_id, usuario=request.user)
+
+    # Prepara os grupos e exercícios (com séries e dados históricos)
+    grupos_qs = treino.grupomuscular_set.prefetch_related('exercicio_set')
+    execution_groups = []
+    for grupo in grupos_qs:
+        ex_list = []
+        for ex in grupo.exercicio_set.all():
+            # séries
+            ex.series_range = range(1, ex.series + 1)
+
+            # histórico daquele exercício neste treino
+            hist = ExecucaoExercicio.objects.filter(
+                execucao_treino__treino=treino,
+                exercicio=ex
+            )
+            # último peso
+            last = hist.order_by('-execucao_treino__data_inicio', '-serie').first()
+            ex.last_weight = last.carga_utilizada if last else None
+            # peso máximo
+            agg = hist.aggregate(m=Max('carga_utilizada'))
+            ex.max_weight = agg['m'] if agg['m'] is not None else None
+
+            ex_list.append(ex)
+        execution_groups.append({
+            'grupo': grupo,
+            'exercicios': ex_list
+        })
+
+    if request.method == 'POST':
+        execucao = ExecucaoTreino.objects.create(
+            treino=treino, usuario=request.user
+        )
+
+        soma_carga   = 0.0
+        soma_tempo   = timedelta()
+        contador_ser = 0
+
+        for key, val in request.POST.items():
+            if not key.startswith("peso_"):
+                continue
+            _, ex_id, serie = key.split("_")
+            carga = float(val) if val else 0.0
+            dur_sec = int(request.POST.get(f"duracao_{ex_id}_{serie}", 0))
+            duracao = timedelta(seconds=dur_sec)
+
+            ExecucaoExercicio.objects.create(
+                execucao_treino=execucao,
+                exercicio_id=int(ex_id),
+                serie=int(serie),
+                carga_utilizada=carga,
+                duracao=duracao,
+            )
+
+            soma_carga   += carga
+            soma_tempo   += duracao
+            contador_ser += 1
+
+        execucao.carga_total = (soma_carga / contador_ser) if contador_ser else 0.0
+        execucao.duracao     = soma_tempo
+        execucao.save()
+
+        return redirect('treinos:historico_treino')
+
+    return render(request, 'treinos/iniciar_treino.html', {
+        'treino': treino,
+        'execution_groups': execution_groups
+    })

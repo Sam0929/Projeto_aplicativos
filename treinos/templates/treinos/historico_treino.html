@@ -3,6 +3,7 @@
 
 {% block title %}Histórico{% endblock %}
 {% block header %}Histórico de Treinos{% endblock %}
+
 {% block content %}
 <style>
   .timeline-container {
@@ -81,20 +82,20 @@
 </style>
 
 <div class="timeline-container">
-  {% for treino in treinos %}
+  {% for execucao in execucoes %}
     <div class="timeline-item">
       <div class="timeline-header">
-        <h3>{{ treino.nome }}</h3>
-        <span class="date">{{ treino.ultima_execucao|date:"d/m/Y H:i" }}</span>
+        <h3>{{ execucao.treino.nome }}</h3>
+        <span class="date">{{ execucao.data_inicio|date:"d/m/Y H:i" }}</span>
       </div>
       <div class="timeline-stats">
         <div class="stat">
           <span class="label">Duração</span>
-          <span class="value">{{ treino.duracao_minutos }} min</span>
+          <span class="value">{{ execucao.duracao_minutos }} min</span>
         </div>
         <div class="stat">
-          <span class="label">Carga total</span>
-          <span class="value">{{ treino.carga_total|floatformat:"0" }} kg</span>
+          <span class="label">Carga média</span>
+          <span class="value">{{ execucao.carga_total|floatformat:"0" }} kg</span>
         </div>
       </div>
     </div>
@@ -102,7 +103,7 @@
     <div class="empty-state">
       <img src="{% static 'treinos/images/history.svg' %}"
            alt="Sem histórico" class="empty-icon">
-      <p>Nenhum treino registrado ainda</p>
+      <p>Nenhuma execução de treino ainda</p>
     </div>
   {% endfor %}
 </div>

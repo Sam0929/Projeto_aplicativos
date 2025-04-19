@@ -1,0 +1,217 @@
+{% extends 'treinos/base.html' %}
+{% load static %}
+
+{% block title %}Executando: {{ treino.nome }}{% endblock %}
+{% block header %}Executando: {{ treino.nome }}{% endblock %}
+
+{% block content %}
+<style>
+  .grupo-card {
+    background: #1f1f1f;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2.5rem;
+    border-left: 6px solid var(--primary);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  .grupo-card h2 {
+    color: var(--primary);
+    margin-bottom: 1.5rem;
+  }
+
+  .exercicio-item {
+    background: #292929;
+    border-radius: 12px;
+    padding: 1.8rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .exercicio-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .exercicio-label h4 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #fff;
+  }
+  .exercicio-label .reps {
+    font-size: 1rem;
+    color: var(--text-secondary);
+  }
+
+  .history-info {
+    background: #1f1f1f;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+
+  .timer-block {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #1f1f1f;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+  }
+  .timer-block .timer {
+    font-family: monospace;
+    font-size: 1.2rem;
+    color: #fff;
+    flex: 1;
+    text-align: center;
+  }
+  .btn-timer {
+    background: var(--primary);
+    border: none;
+    color: #fff;
+    font-size: 1.4rem;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-timer:hover {
+    background: var(--primary-dark);
+  }
+
+  .series-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .serie-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .serie-row label {
+    color: #ccc;
+    min-width: 6rem;
+  }
+  .serie-row .input-field input {
+    width: 140px;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 0.6rem;
+    color: #fff;
+    font-size: 1rem;
+  }
+
+  .form-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 2rem;
+  }
+  .btn.primary {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 0.9rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+  }
+  .btn.primary:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+  }
+</style>
+
+<form method="post">
+  {% csrf_token %}
+  {% for grp in execution_groups %}
+    <div class="grupo-card">
+      <h2>{{ grp.grupo.nome }}</h2>
+
+      {% for ex in grp.exercicios %}
+      <div class="exercicio-item">
+        <!-- cabeçalho com nome + reps -->
+        <div class="exercicio-label">
+          <h4>{{ ex.nome }}</h4>
+          <span class="reps">{{ ex.repeticoes }} reps</span>
+        </div>
+
+        <!-- histórico alinhado -->
+        <div class="history-info">
+          {% if ex.last_weight %}
+            Último peso: {{ ex.last_weight|floatformat:"0" }} kg
+          {% else %}
+            Sem histórico
+          {% endif %}
+          {% if ex.max_weight %}
+            | Máximo: {{ ex.max_weight|floatformat:"0" }} kg
+          {% endif %}
+        </div>
+
+        <!-- cronômetro por exercício -->
+        <div class="timer-block">
+          <span class="timer" id="timer-{{ ex.id }}">00:00</span>
+          <button type="button"
+                  class="btn-timer"
+                  onclick="startTimer('{{ ex.id }}')">▶️</button>
+          <button type="button"
+                  class="btn-timer"
+                  onclick="stopTimer('{{ ex.id }}')">⏹️</button>
+          <input type="hidden"
+                 name="duracao_exercicio_{{ ex.id }}"
+                 id="input-timer-{{ ex.id }}">
+        </div>
+
+        <!-- lista de séries -->
+        <div class="series-list">
+          {% for i in ex.series_range %}
+          <div class="serie-row">
+            <label>Série {{ i }}</label>
+            <div class="input-field">
+              <input type="number"
+                     name="peso_{{ ex.id }}_{{ i }}"
+                     placeholder="kg"
+                     step="0.5"
+                     required>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+
+  <div class="form-footer">
+    <button type="submit" class="btn primary">✅ Finalizar Treino</button>
+  </div>
+</form>
+
+<script>
+  const timers = {};
+
+  function startTimer(exId) {
+    if (timers[exId]) return;
+    let seconds = 0;
+    const display = document.getElementById(`timer-${exId}`);
+    const inputField = document.getElementById(`input-timer-${exId}`);
+    timers[exId] = setInterval(() => {
+      seconds++;
+      const min = String(Math.floor(seconds/60)).padStart(2,'0');
+      const sec = String(seconds%60).padStart(2,'0');
+      display.innerText = `${min}:${sec}`;
+      inputField.value = seconds;
+    }, 1000);
+  }
+
+  function stopTimer(exId) {
+    clearInterval(timers[exId]);
+    timers[exId] = null;
+  }
+</script>
+{% endblock %}

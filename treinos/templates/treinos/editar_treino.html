@@ -1,115 +1,238 @@
 {% extends 'treinos/base.html' %}
 
 {% block content %}
-<div class="container">
-    <h2>Editar Treino: {{ treino.nome }}</h2>
-    <form method="post">
-        {% csrf_token %}
-        
-        <!-- Nome do Treino -->
-        <div class="mb-3">
-            <label class="form-label">Nome do Treino:</label>
-            <input type="text" name="nome_treino" value="{{ treino.nome }}" class="form-control" required>
-        </div>
+<style>
+  body {
+    background-color: #121212;
+    color: #fff;
+  }
 
-        <!-- Grupos Musculares Existente -->
-        <div id="grupos-musculares-container">
-            {% for grupo in treino.grupomuscular_set.all %}
-            <div class="card mb-3" data-grupo-index="{{ forloop.counter0 }}">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <input type="text" name="grupos[]" value="{{ grupo.nome }}" class="form-control" required>
-                    </h5>
-                    
-                    <div class="exercicios-container mb-3">
-                        {% for exercicio in grupo.exercicio_set.all %}
-                        <div class="exercicio mb-2">
-                            <div class="row g-2">
-                                <div class="col">
-                                    <input type="text" name="exercicios[{{ forloop.parentloop.counter0 }}][nome]" 
-                                           value="{{ exercicio.nome }}" class="form-control" required>
-                                </div>
-                                <div class="col">
-                                    <input type="number" name="exercicios[{{ forloop.parentloop.counter0 }}][series]" 
-                                           value="{{ exercicio.series }}" class="form-control" required>
-                                </div>
-                                <div class="col">
-                                    <input type="number" name="exercicios[{{ forloop.parentloop.counter0 }}][descanso]" 
-                                           value="{{ exercicio.descanso }}" class="form-control" required>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    
-                    <button type="button" class="btn btn-sm btn-outline-primary" 
-                            onclick="adicionarExercicio({{ forloop.counter0 }})">
-                        + Adicionar Exercício
-                    </button>
+  h2 {
+    color: var(--primary);
+    margin-bottom: 2rem;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #1f1f1f;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  .form-label {
+    font-weight: bold;
+    color: #ccc;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  input[type="text"],
+  input[type="number"] {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    color: #fff;
+    font-size: 1rem;
+    width: 100%;
+  }
+
+  input::placeholder {
+    color: #777;
+  }
+
+  .card {
+    background-color: #292929;
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: #fff;
+  }
+
+  .exercicio-box {
+    background-color: #333;
+    border: 1px solid #555;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .exercicio-title {
+    font-weight: bold;
+    margin-bottom: 0.8rem;
+    color: #aaa;
+    font-size: 0.95rem;
+  }
+
+  .btn {
+    font-size: 1rem;
+    padding: 0.7rem 1.2rem;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    border: none;
+    color: #fff;
+    margin-top: 1rem;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-dark);
+  }
+
+  .btn-secondary {
+    background-color: #444;
+    border: none;
+    color: #fff;
+    margin-top: 1rem;
+  }
+
+  .btn-outline-primary {
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    background: transparent;
+  }
+
+  .btn-outline-primary:hover {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .row.g-2 > .col {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .col label {
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+    color: #aaa;
+  }
+</style>
+
+<div class="container">
+  <h2>Editar Treino: {{ treino.nome }}</h2>
+  <form method="post">
+    {% csrf_token %}
+
+    <!-- Nome do Treino -->
+    <div class="mb-3">
+      <label class="form-label">Nome do Treino:</label>
+      <input type="text" name="nome_treino" value="{{ treino.nome }}" required>
+    </div>
+
+    <!-- Grupos Musculares Existentes -->
+    <div id="grupos-musculares-container">
+      {% for grupo in treino.grupomuscular_set.all %}
+      <div class="card" data-grupo-index="{{ forloop.counter0 }}">
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label">Nome do Grupo Muscular:</label>
+            <input type="text" name="grupos[]" value="{{ grupo.nome }}" required>
+          </div>
+
+          <div class="exercicios-container mb-3" id="exercicios-{{ forloop.counter0 }}">
+            {% for exercicio in grupo.exercicio_set.all %}
+            <div class="exercicio-box">
+              <div class="exercicio-title">Exercício {{ forloop.counter }}</div>
+              <div class="row g-2">
+                <div class="col">
+                  <label>Nome</label>
+                  <input type="text" name="exercicios[{{ forloop.parentloop.counter0 }}][nome]"
+                         value="{{ exercicio.nome }}" required>
                 </div>
+                <div class="col">
+                  <label>Séries</label>
+                  <input type="number" name="exercicios[{{ forloop.parentloop.counter0 }}][series]"
+                         value="{{ exercicio.series }}" required>
+                </div>
+                <div class="col">
+                  <label>Repetições</label>
+                  <input type="number" name="exercicios[{{ forloop.parentloop.counter0 }}][reps]"
+                         value="{{ exercicio.repeticoes }}" required>
+                </div>
+                <div class="col">
+                  <label>Descanso (s)</label>
+                  <input type="number" name="exercicios[{{ forloop.parentloop.counter0 }}][descanso]"
+                         value="{{ exercicio.descanso }}" required>
+                </div>
+              </div>
             </div>
             {% endfor %}
-        </div>
+          </div>
 
-        <button type="button" onclick="adicionarGrupoMuscular()" class="btn btn-secondary">
-            + Adicionar Grupo Muscular
-        </button>
-        
-        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
-    </form>
+          <button type="button" class="btn btn-sm btn-outline-primary"
+                  onclick="adicionarExercicio({{ forloop.counter0 }})">
+            + Adicionar Exercício
+          </button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <button type="button" onclick="adicionarGrupoMuscular()" class="btn btn-secondary">
+      + Adicionar Grupo Muscular
+    </button>
+
+    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+  </form>
 </div>
 
-<!-- Mesmo JavaScript do novo_treino.html -->
 <script>
-let grupoIndex = {{ treino.grupomuscular_set.count }};
+  let grupoIndex = {{ treino.grupomuscular_set.count }};
 
-function adicionarGrupoMuscular() {
+  function adicionarGrupoMuscular() {
     const container = document.getElementById('grupos-musculares-container');
     const grupoHTML = `
-        <div class="card mb-3" data-grupo-index="${grupoIndex}">
-            <div class="card-body">
-                <h5 class="card-title">
-                    <input type="text" name="grupos[]" class="form-control" placeholder="Nome do Grupo Muscular" required>
-                </h5>
-                
-                <div class="exercicios-container mb-3" id="exercicios-${grupoIndex}"></div>
-                
-                <button type="button" class="btn btn-sm btn-outline-primary" 
-                        onclick="adicionarExercicio(${grupoIndex})">
-                    + Adicionar Exercício
-                </button>
-            </div>
+      <div class="card" data-grupo-index="${grupoIndex}">
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label">Nome do Grupo Muscular:</label>
+            <input type="text" name="grupos[]" placeholder="Nome do Grupo Muscular" required>
+          </div>
+          <div class="exercicios-container mb-3" id="exercicios-${grupoIndex}"></div>
+          <button type="button" class="btn btn-sm btn-outline-primary" onclick="adicionarExercicio(${grupoIndex})">
+            + Adicionar Exercício
+          </button>
         </div>
+      </div>
     `;
     container.insertAdjacentHTML('beforeend', grupoHTML);
     grupoIndex++;
-}
+  }
 
-function adicionarExercicio(grupoId) {
+  function adicionarExercicio(grupoId) {
     const container = document.getElementById(`exercicios-${grupoId}`);
+    const index = container.children.length + 1;
     const exercicioHTML = `
-        <div class="exercicio mb-2">
-            <div class="row g-2">
-                <div class="col">
-                    <input type="text" name="exercicios[${grupoId}][nome]" 
-                           class="form-control" placeholder="Nome do Exercício" required>
-                </div>
-                <div class="col">
-                    <input type="number" name="exercicios[${grupoId}][series]" 
-                           class="form-control" placeholder="Séries" required>
-                </div>
-                <div class="col">
-                    <input type="number" name="exercicios[{{ forloop.parentloop.counter0 }}][reps]" 
-                           value="{{ exercicio.repeticoes }}" class="form-control" required>
-                </div>                
-                <div class="col">
-                    <input type="number" name="exercicios[${grupoId}][descanso]" 
-                           class="form-control" placeholder="Descanso (segundos)" required>
-                </div>
-            </div>
+      <div class="exercicio-box">
+        <div class="exercicio-title">Exercício ${index}</div>
+        <div class="row g-2">
+          <div class="col">
+            <label>Nome</label>
+            <input type="text" name="exercicios[${grupoId}][nome]" placeholder="Nome do Exercício" required>
+          </div>
+          <div class="col">
+            <label>Séries</label>
+            <input type="number" name="exercicios[${grupoId}][series]" placeholder="Séries" required>
+          </div>
+          <div class="col">
+            <label>Repetições</label>
+            <input type="number" name="exercicios[${grupoId}][reps]" placeholder="Repetições" required>
+          </div>
+          <div class="col">
+            <label>Descanso (s)</label>
+            <input type="number" name="exercicios[${grupoId}][descanso]" placeholder="Descanso" required>
+          </div>
         </div>
+      </div>
     `;
     container.insertAdjacentHTML('beforeend', exercicioHTML);
-}
+  }
 </script>
 {% endblock %}
