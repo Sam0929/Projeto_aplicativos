@@ -1,25 +1,152 @@
 {% extends "users/base.html" %}
-{% block title %} Home Page {% endblock title%}
-{% block content %}
-    <div class="jumbotron">
-        <h1 class="display-4">Welcome, {{user.first_name.title|default:'Guest'}}</h1>
-        <p class="lead">
-            This is <b>user registration and login system</b> build with django which is
-            a Python-based free and open-source web framework that follows the model–template–views architectural pattern.
-        </p>
-        <hr class="my-4">
-        <p class="lead">
-            {% if user.is_authenticated %}
 
-            <form action="{% url 'logout' %}" method="post">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-primary btn-lg">Logout</button>
-              </form>
-                
-            {% else %}
-                <a class="btn btn-primary btn-lg" href="{% url 'login' %}" role="button">Sign in</a>
-            {% endif %}
-        </p>
+{% block title %}Home{% endblock title %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --primary: #FF3D00;
+    --primary-dark: #E03800;
+    --primary-light: #FF7043;
+  }
+
+  body {
+    background: #121212;
+    color: #eee;
+  }
+
+  .banner {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    padding: 3rem 1rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    text-align: center;
+    color: #fff;
+  }
+  .banner h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .banner p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+  }
+  .stats {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #ddd;
+  }
+
+  /* GRID DE CARDS */
+  .card-grid .card {
+    background: #1f1f1f;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .card-grid .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .card-grid .card-body {
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+  .card-grid .card-title {
+    margin-bottom: 1rem;
+    color: var(--primary);
+  }
+  .card-grid .card-text {
+    color: #ccc;
+    margin-bottom: 1.5rem;
+  }
+  .card-grid .btn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+  .card-grid .btn:hover {
+    background: var(--primary-dark);
+  }
+
+  /* DESTAQUE NOS ÍCONES */
+  .card-grid .card-body i {
+    color: var(--primary);
+    opacity: 0.9;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .card-grid .card-body i:hover {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="container mt-4">
+  <!-- Banner -->
+  <div class="banner">
+    <h1>Olá, {{ user.first_name|default:user.username|title }}!</h1>
+    <p>Gerencie seus treinos, acompanhe suas execuções e evolua seu desempenho 💪</p>
+    {% if last_exec %}
+      <div class="stats">
+        Última execução: <strong>{{ last_exec.treino.nome }}</strong> em {{ last_exec.data_inicio|date:"d/m/Y H:i" }}
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Cards de Navegação -->
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 card-grid">
+    <!-- Meus Treinos -->
+    <div class="col">
+      <div class="card h-100">
+        <div class="card-body">
+          <i class="fas fa-dumbbell fa-2x mb-3"></i>
+          <h5 class="card-title">Meus Treinos</h5>
+          <p class="card-text">{{ treinos_count }} cadastrados</p>
+          <a href="{% url 'treinos:lista_treinos' %}" class="btn">Ver Treinos</a>
+        </div>
+      </div>
     </div>
 
+    <!-- Histórico -->
+    <div class="col">
+      <div class="card h-100">
+        <div class="card-body">
+          <i class="fas fa-history fa-2x mb-3"></i>
+          <h5 class="card-title">Histórico</h5>
+          <p class="card-text">{{ exec_count }} execuções</p>
+          <a href="{% url 'treinos:historico_treino' %}" class="btn">Ver Histórico</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Novo Treino -->
+    <div class="col">
+      <div class="card h-100">
+        <div class="card-body">
+          <i class="fas fa-plus-circle fa-2x mb-3"></i>
+          <h5 class="card-title">Novo Treino</h5>
+          <p class="card-text">Monte um treino personalizado</p>
+          <a href="{% url 'treinos:novo_treino' %}" class="btn">Criar Agora</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Perfil -->
+    <div class="col">
+      <div class="card h-100">
+        <div class="card-body">
+          <i class="fas fa-user-cog fa-2x mb-3"></i>
+          <h5 class="card-title">Meu Perfil</h5>
+          <p class="card-text">Atualize seus dados</p>
+          <a href="{% url 'users-profile' %}" class="btn">Editar Perfil</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock content %}

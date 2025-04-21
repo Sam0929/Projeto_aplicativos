@@ -5,13 +5,25 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views import View
 from django.contrib.auth.decorators import login_required
+from treinos.models import Treino, ExecucaoTreino
 
 from .forms import RegisterForm, LoginForm, UpdateUserForm, UpdateProfileForm
 
 
+@login_required
 def home(request):
-    return render(request, 'users/home.html')
+    # Estatísticas rápidas
+    treinos_count = Treino.objects.filter(usuario=request.user).count()
+    exec_count   = ExecucaoTreino.objects.filter(usuario=request.user).count()
+    last_exec    = ExecucaoTreino.objects.filter(usuario=request.user) \
+                                         .order_by('-data_inicio') \
+                                         .first()
 
+    return render(request, 'users/home.html', {
+        'treinos_count': treinos_count,
+        'exec_count':    exec_count,
+        'last_exec':     last_exec,
+    })
 
 class RegisterView(View):
     

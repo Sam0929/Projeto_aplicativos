@@ -73,3 +73,8 @@
     color: var(--primary);
     font-weight: bold;
   }
+
+  :root {
+    --primary: #FF3D00;
+    --primary-dark: #E03800;
+  }
