@@ -1,4 +1,4 @@
-<h1 align="center"> Projeto Camp </h1>
+<h1 align="center"> Projeto Aplicativos</h1>
 
 ### Passo a passo acesso ao projeto
 
