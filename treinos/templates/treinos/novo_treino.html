@@ -2,6 +2,32 @@
 {% block title %}Novo Treino{% endblock %}
 {% block header %}Criar Novo Treino{% endblock %}
 {% block content %}
+
+<style>
+.exercise-details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 colunas iguais */
+  gap: 1rem;
+  margin-top: 2rem;
+  align-items: end; /* Para alinhar os campos pela base */
+  
+}
+
+.exer-name-field {
+  grid-column: 1 / -1; /* Nome do exercício ocupa a linha inteira */
+  margin-bottom: 1.5rem;
+}
+
+.input-field input {
+  height: 50px; /* Aumenta altura */
+  font-size: 1.2rem; /* Aumenta texto */
+}
+.exercicio-item .exer-name-field {
+  margin-bottom: 0;    /* zera o espaço extra abaixo do input de nome */
+}
+
+
+</style>
 <div class="container">
   <form class="treino-form" method="post" id="mainForm">
     {% csrf_token %}
@@ -33,11 +59,11 @@
             <div class="exercicio-actions">
               <button type="button" class="icon-btn delete-exercicio-btn" onclick="removerExercicio(this)">🗑️</button>
             </div>
-            <div class="input-field exer-name-field">
-              <label class="field-label">Nome do Exercício</label>
-              <input type="text" name="exercicios[0][nome]" placeholder="Ex: Supino" required>
-            </div>
             <div class="exercise-details-grid">
+              <div class="input-field exer-name-field">
+                <label class="field-label">Nome do Exercício</label>
+                <input type="text" name="exercicios[0][nome]" placeholder="Ex: Supino" required>
+              </div>
               <div class="series-reps-container">
                 <div class="input-field small">
                   <label class="field-label">Séries</label>
@@ -45,16 +71,17 @@
                 </div>
                 <span class="x">x</span>
                 <div class="input-field small">
-                  <label class="field-label">Reps</label>
+                  <label class="field-label">Repetições</label>
                   <input type="number" name="exercicios[0][reps]" placeholder="8" required>
                 </div>
               </div>
               <div class="input-field small descanso-field">
-                <label class="field-label">Descanso </label>
+                <label class="field-label">Descanso</label>
                 <input type="number" name="exercicios[0][descanso]" placeholder="60" required>
                 <span class="seg">seg</span>
               </div>
             </div>
+            
           </div>
         </div>
         <button type="button" class="btn ghost add-exercicio" onclick="adicionarExercicio(this)">+ Exercício</button>
