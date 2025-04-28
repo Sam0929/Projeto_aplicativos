@@ -7,13 +7,13 @@
 {% block extra_css %}
 
     <link rel="stylesheet" href="{% static 'css/login.css' %}">
-
+        <!-- Fonte Roboto e FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
 {% endblock %}
 
 {% block content %}
-<!-- Fonte Roboto e FontAwesome -->
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+
 
 <div class="hardcore-hero">
     <div class="overlay"></div>
@@ -59,7 +59,7 @@
                     </div>
                     <div class="form-check text-white mb-3">
                         {{ form.remember_me }}
-                        <label class="form-check-label ms-2" for="remember_me">Lembrar senha</label>
+                        <label class="form-check-label ms-2" for="remember_me" >Lembrar senha</label>
                     </div>
                     <button type="submit" class="btn btn-danger w-100 fw-bold">Entrar <i class="fas fa-dumbbell ms-2"></i></button>
                 </form>
