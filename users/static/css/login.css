@@ -8,7 +8,7 @@
     .overlay { 
         position: absolute;
         top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.75);
+        background-color:#000000
         
     }
     .login-wrapper {
@@ -19,7 +19,7 @@
     }
     .login-card {
         background: #222;
-        border: 8px solid #e84118;
+        border: 3px solid #e84118;
         border-radius: 3px;
         width: 100%; max-width: 360px;
         box-shadow: 0 0 20px rgba(232,65,24,0.6);

@@ -8,9 +8,16 @@ Crie um ambiente virtual e ative-o:
 ```sh
 python -m venv venv
 ```
+
 ```sh
 venv\Scripts\activate
 ```
+
+Copie o arquivo .env.example, depois adicione os dados sensíveis:
+```sh
+cp .env.example .env
+```
+
 Instale as dependências:
 ```sh
 pip install -r requirements.txt
