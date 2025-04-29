@@ -19,8 +19,8 @@
     }
     .login-card {
         background: #222;
-        border: 3px solid #e84118;
-        border-radius: 6px;
+        border: 8px solid #e84118;
+        border-radius: 3px;
         width: 100%; max-width: 360px;
         box-shadow: 0 0 20px rgba(232,65,24,0.6);
         color: #fff;

@@ -5,7 +5,9 @@ from .models import Treino, GrupoMuscular, Exercicio, ExecucaoTreino, ExecucaoEx
 from django.utils.timezone import now
 from datetime import timedelta
 from django.db.models import Max
-
+from collections import Counter, defaultdict
+from django.db.models import Prefetch
+from django.shortcuts import render
 
 @login_required
 def lista_treinos(request):
@@ -23,18 +25,82 @@ def detalhe_treino(request, pk):
 
 
 
+
 @login_required
 def historico_treino(request):
-    # busca execuções do usuário, mais recentes primeiro
-    execucoes = (
-        ExecucaoTreino.objects
-        .filter(usuario=request.user)
-        .select_related('treino')
-        .order_by('-data_inicio')
-    )
+    # 1) Busque todas as execuções do usuário
+    execucoes = ExecucaoTreino.objects.filter(
+        usuario=request.user
+    ).select_related('treino').order_by('-data_inicio')
+
+    # 2) Pré-calcule estatísticas de moda e máxima para cada treino+exercício
+    #    Estrutura: { treino_id: { exercicio_id: {'moda':.., 'maxima':..}, ... }, ... }
+    global_stats = {}
+    treino_ids = {e.treino_id for e in execucoes}
+    for tid in treino_ids:
+        itens_hist = ExecucaoExercicio.objects.filter(
+            execucao_treino__treino_id=tid
+        )
+        cargas_por_ex = defaultdict(list)
+        for ih in itens_hist:
+            cargas_por_ex[ih.exercicio_id].append(ih.carga_utilizada)
+
+        stats = {}
+        for eid, cargas in cargas_por_ex.items():
+            stats[eid] = {
+                'moda': Counter(cargas).most_common(1)[0][0],
+                'maxima': max(cargas),
+            }
+        global_stats[tid] = stats
+
+    # 3) Para cada execução, monte os detalhes agrupados por exercício
+    for execucao in execucoes:
+        stats = global_stats.get(execucao.treino_id, {})
+        itens_exec = ExecucaoExercicio.objects.filter(
+            execucao_treino=execucao
+        ).select_related('exercicio')
+
+        # agrupa cargas desta execução por exercício
+        usadas_por_ex = defaultdict(list)
+        for item in itens_exec:
+            usadas_por_ex[item.exercicio].append(item.carga_utilizada)
+
+        detalhes = []
+        perf_indices = []
+        for ex_obj, cargas_usadas in usadas_por_ex.items():
+            hist = stats.get(ex_obj.id, {'moda': 0, 'maxima': 0})
+            carga_moda  = hist['moda']
+            carga_max   = hist['maxima']
+
+            # índice de desempenho (cada série / máximo histórico)
+            for carga in cargas_usadas:
+                if carga_max > 0:
+                    perf_indices.append(carga / carga_max)
+
+            detalhes.append({
+                'exercicio':        ex_obj.nome,
+                'cargas_usadas':    cargas_usadas,
+                'carga_mais_usada': carga_moda,
+                'carga_maxima':     carga_max,
+            })
+
+        # calcula desempenho geral (você já tinha isso)
+        pct = sum(perf_indices) / len(perf_indices) if perf_indices else 0
+        if pct >= 0.9:
+            execucao.desempenho = 'Ótimo'
+        elif pct >= 0.7:
+            execucao.desempenho = 'Bom'
+        elif pct >= 0.5:
+            execucao.desempenho = 'Regular'
+        else:
+            execucao.desempenho = 'Ruim'
+
+        execucao.detalhes = detalhes
+
     return render(request, 'treinos/historico_treino.html', {
         'execucoes': execucoes
     })
+
 
 
 

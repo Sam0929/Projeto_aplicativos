@@ -1,85 +1,60 @@
 {% extends 'treinos/base.html' %}
-{% load static %}
-
-{% block title %}Histórico{% endblock %}
-{% block header %}Histórico de Treinos{% endblock %}
+{% block title %}Histórico{% endblock title %}
+{% block header %}Histórico de Treinos{% endblock header %}
 
 {% block content %}
 <style>
-  .timeline-container {
-    position: relative;
-    margin: 2rem 0;
-    padding-left: 2rem;
-  }
+  .timeline-container { position: relative; margin:2rem 0; padding-left:2rem; }
   .timeline-container::before {
-    content: '';
-    position: absolute;
-    left: 1rem; top: 0; bottom: 0;
-    width: 4px;
-    background: var(--primary-light);
-    border-radius: 2px;
+    content:''; position:absolute; left:1rem; top:0; bottom:0;
+    width:4px; background:var(--primary-light); border-radius:2px;
   }
   .timeline-item {
-    position: relative;
-    margin-bottom: 2.5rem;
-    padding: 1.5rem;
-    background: var(--bg-light);
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    position:relative; margin-bottom:2.5rem;
+    padding:1.5rem; background:var(--bg-light);
+    border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);
   }
   .timeline-item::before {
-    content: '';
-    position: absolute;
-    left: -1.15rem; top: 1.5rem;
-    width: 18px; height: 18px;
-    background: var(--primary);
-    border: 4px solid var(--bg-light);
-    border-radius: 50%;
+    content:''; position:absolute; left:-1.15rem; top:1.5rem;
+    width:18px; height:18px; background:var(--primary);
+    border:4px solid var(--bg-light); border-radius:50%;
   }
-  .timeline-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 1rem;
+  .timeline-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:1rem; }
+  .timeline-header h3 { margin:0; font-size:1.25rem; color:var(--text-primary); }
+  .timeline-header .date { font-size:.85rem; color:var(--text-secondary); }
+
+  .timeline-stats { display:flex; gap:2rem; margin-bottom:1rem; }
+  .timeline-stats .label { display:block; font-size:.8rem; color:var(--text-secondary); }
+  .timeline-stats .value { font-size:1.1rem; font-weight:600; color:var(--text-primary); }
+
+  .btn-detalhes {
+    background:var(--primary); color:#fff; border:none;
+    padding:.4rem .8rem; font-size:.85rem;
+    border-radius:6px; cursor:pointer; transition:background .3s; margin-top:.5rem;
   }
-  .timeline-header h3 {
-    margin: 0;
-    font-size: 1.25rem;
-    color: var(--text-primary);
+  .btn-detalhes:hover { background:var(--primary-dark); }
+
+  .detalhes-execucao {
+    background:var(--bg-dark); padding:1rem;
+    margin-top:1rem; border-radius:10px;
   }
-  .timeline-header .date {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-  }
-  .timeline-stats {
-    display: flex;
-    gap: 2rem;
-    margin-bottom: 1rem;
-  }
-  .timeline-stats .stat .label {
-    display: block;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-  }
-  .timeline-stats .stat .value {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--text-primary);
-  }
+  .detalhes-execucao div { margin-bottom:.75rem; }
+  .hidden { display:none; }
+
   .empty-state {
-    text-align: center;
-    margin-top: 3rem;
+    text-align:center; margin-top:3rem; color:var(--text-muted);
   }
-  .empty-state .empty-icon {
-    width: 120px;
-    opacity: 0.6;
-    margin-bottom: 1rem;
+  .empty-state .icon {
+    font-size:4rem; margin-bottom:1rem;
   }
-  .empty-state p {
-    color: var(--text-secondary);
-    font-style: italic;
-  }
+  .empty-state p { font-style:italic; }
 </style>
+
+<script>
+  function toggleDetalhes(id) {
+    document.getElementById(`detalhes-${id}`).classList.toggle('hidden');
+  }
+</script>
 
 <div class="timeline-container">
   {% for execucao in execucoes %}
@@ -88,23 +63,46 @@
         <h3>{{ execucao.treino.nome }}</h3>
         <span class="date">{{ execucao.data_inicio|date:"d/m/Y H:i" }}</span>
       </div>
+
       <div class="timeline-stats">
         <div class="stat">
           <span class="label">Duração</span>
           <span class="value">{{ execucao.duracao_minutos }} min</span>
         </div>
         <div class="stat">
-          <span class="label">Carga média</span>
-          <span class="value">{{ execucao.carga_total|floatformat:"0" }} kg</span>
+          <span class="label">Desempenho</span>
+          <span class="value">{{ execucao.desempenho }}</span>
         </div>
+      </div>
+
+      <button class="btn-detalhes"
+              onclick="toggleDetalhes({{ execucao.id }})">
+        Exibir detalhes
+      </button>
+
+      <div id="detalhes-{{ execucao.id }}" class="detalhes-execucao hidden">
+        {% if execucao.detalhes %}
+          {% for d in execucao.detalhes %}
+            <div>
+              <strong>{{ d.exercicio }}</strong><br>
+              Carga usada nesta execução:
+                <strong>{{ d.cargas_usadas|join:", " }} kg</strong><br>
+              Carga mais usada (histórico):
+                <strong>{{ d.carga_mais_usada }} kg</strong><br>
+              Carga máxima (histórico):
+                <strong>{{ d.carga_maxima }} kg</strong>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p>Sem dados de carga para este treino.</p>
+        {% endif %}
       </div>
     </div>
   {% empty %}
     <div class="empty-state">
-      <img src="{% static 'treinos/images/history.svg' %}"
-           alt="Sem histórico" class="empty-icon">
-      <p>Nenhuma execução de treino ainda</p>
+      <div class="icon">📜</div>
+      <p>Nenhuma execução de treino ainda.</p>
     </div>
   {% endfor %}
 </div>
-{% endblock %}
+{% endblock content %}
