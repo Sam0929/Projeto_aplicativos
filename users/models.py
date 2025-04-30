@@ -10,7 +10,7 @@ class Profile(models.Model):
     age = models.IntegerField(null = True)
     weight = models.IntegerField(null = True)
     date_of_birth = models.DateField(null = True)
-    avatar = models.ImageField(default='default.jpg', upload_to='profile_images')
+    avatar = models.ImageField(default='default.png', upload_to='profile_images')
     bio = models.TextField(null = True)
 
     def __str__(self):

@@ -192,7 +192,7 @@ def excluir_treino(request, pk):
     if request.method == 'POST':
         treino.delete()
         return redirect('treinos:lista_treinos')
-    return render(request, 'treinos/confirmar_exclusao.html', {'treino': treino})
+    return render(request, 'users/home.html', {'treino': treino})
 
 
 @login_required
