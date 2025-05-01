@@ -4,9 +4,8 @@ from .forms import TreinoForm
 from .models import Treino, GrupoMuscular, Exercicio, ExecucaoTreino, ExecucaoExercicio
 from django.utils.timezone import now
 from datetime import timedelta
-from django.db.models import Max
+from django.db.models import Max, Prefetch
 from collections import Counter, defaultdict
-from django.db.models import Prefetch
 from django.shortcuts import render
 
 @login_required
