@@ -1,88 +1,9 @@
 {% extends "users/base.html" %}
-
+{% load static %}
 {% block title %}Home{% endblock title %}
 
 {% block extra_css %}
-<style>
-  :root {
-    --primary: #FF3D00;
-    --primary-dark: #E03800;
-    --primary-light: #FF7043;
-  }
-
-  body {
-    background: #121212;
-    color: #eee;
-  }
-
-  .banner {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    padding: 3rem 1rem;
-    border-radius: 12px;
-    margin-bottom: 2rem;
-    text-align: center;
-    color: #fff;
-  }
-  .banner h1 {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
-  }
-  .banner p {
-    font-size: 1.1rem;
-    opacity: 0.9;
-  }
-  .stats {
-    margin-top: 1rem;
-    font-size: 0.9rem;
-    color: #ddd;
-  }
-
-  /* GRID DE CARDS */
-  .card-grid .card {
-    background: #1f1f1f;
-    border: 1px solid #2a2a2a;
-    border-radius: 12px;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-  .card-grid .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-  }
-  .card-grid .card-body {
-    text-align: center;
-    padding: 2rem 1rem;
-  }
-  .card-grid .card-title {
-    margin-bottom: 1rem;
-    color: var(--primary);
-  }
-  .card-grid .card-text {
-    color: #ccc;
-    margin-bottom: 1.5rem;
-  }
-  .card-grid .btn {
-    background: var(--primary);
-    color: #fff;
-    border: none;
-    padding: 0.6rem 1.2rem;
-    border-radius: 6px;
-    transition: background 0.2s;
-  }
-  .card-grid .btn:hover {
-    background: var(--primary-dark);
-  }
-
-  /* DESTAQUE NOS ÍCONES */
-  .card-grid .card-body i {
-    color: var(--primary);
-    opacity: 0.9;
-    transition: opacity 0.2s, transform 0.2s;
-  }
-  .card-grid .card-body i:hover {
-    opacity: 1;
-    transform: scale(1.1);
-  }
-</style>
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
 {% endblock extra_css %}
 
 {% block content %}
