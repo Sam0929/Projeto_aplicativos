@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.contrib.auth.views import LoginView, PasswordResetView, PasswordChangeView
 from django.contrib import messages
@@ -6,7 +6,8 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.views import View
 from django.contrib.auth.decorators import login_required
 from treinos.models import Treino, ExecucaoTreino,CompartilhamentoTreino
-from .forms import RegisterForm, LoginForm, UpdateUserForm, UpdateProfileForm
+from .forms import RegisterForm, LoginForm, UpdateUserForm, UpdateProfileForm 
+from django.contrib.auth import get_user_model
 
 
 @login_required
@@ -114,3 +115,24 @@ def profile(request):
         profile_form = UpdateProfileForm(instance=request.user.profile)
 
     return render(request, 'users/profile.html', {'user_form': user_form, 'profile_form': profile_form})
+
+User = get_user_model()
+
+@login_required
+def profile_detail(request, username):
+    """
+    Exibe o perfil de outro usuário identificado pelo `username`.
+    Se o username não existir, retorna 404.
+    """
+    # Busca o usuário cujo perfil desejamos ver
+    usuario = get_object_or_404(User, username=username)
+
+    # Se quiser evitar ver o próprio perfil aqui, poderia redirecionar para 'users-profile',
+    # mas normalmente exibimos tudo de forma read-only.
+    is_me = (usuario == request.user)
+
+    # Se tiver campos extras (ex: bio, foto, etc.), adicione aqui.
+    return render(request, 'users/profile_detail.html', {
+        'usuario': usuario,
+        'is_me': is_me,
+    })

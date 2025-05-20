@@ -1,26 +1,102 @@
 {% extends 'treinos/base.html' %}
 {% load static %}
+
 {% block title %}Adicionar Amigos{% endblock %}
 {% block header %}Adicionar Novo Amigo{% endblock %}
 
-{% block content %}
-<div class="container">
-  <h2>Enviar Pedido de Amizade</h2>
-  <form method="post">
-    {% csrf_token %}
-    <div class="input-field">
-      <label for="id_username" class="field-label">Username do usuário</label>
-      <input type="text" id="id_username" name="username" placeholder="Digite o username exato" required>
-    </div>
-    <button type="submit" class="btn primary">Enviar Pedido</button>
-  </form>
+{% block extra_css %}
+  <style>
+    .amizades-container {
+      max-width: 500px;
+      margin: 40px auto;
+      background: #1f1f1f;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      color: #fff;
+    }
+    .amizades-container h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: var(--primary);
+    }
+    .input-field {
+      margin-bottom: 1.5rem;
+    }
+    .input-field input {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 0.9rem 1rem;
+      width: 100%;
+      font-size: 1rem;
+      color: #fff;
+    }
+    .input-field .field-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+    .btn.primary {
+      background: var(--primary);
+      color: #fff;
+      width: 100%;
+      padding: 0.8rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      margin-top: 0.5rem;
+      transition: background 0.2s;
+    }
+    .btn.primary:hover {
+      background: #e55039;
+    }
+    .messages {
+      margin-top: 1.5rem;
+      list-style: none;
+      padding: 0;
+    }
+    .messages .message {
+      background: #333;
+      border-left: 4px solid var(--primary);
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+      border-radius: 6px;
+      color: #fff;
+    }
+    .messages .message.error {
+      border-color: #e74c3c;
+    }
+    .messages .message.success {
+      border-color: #27ae60;
+    }
+    .messages .message.warning {
+      border-color: #f39c12;
+    }
+    .messages .message.info {
+      border-color: #3498db;
+    }
+  </style>
+{% endblock %}
 
-  {% if messages %}
-    <ul class="messages">
-      {% for msg in messages %}
-        <li class="message {{ msg.tags }}">{{ msg }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-</div>
+{% block content %}
+  <div class="amizades-container">
+    <h2>Enviar Pedido de Amizade</h2>
+    <form method="post">
+      {% csrf_token %}
+      <div class="input-field">
+        <label for="id_username" class="field-label">Username do usuário</label>
+        <input type="text" id="id_username" name="username" placeholder="Digite o username exato" required>
+      </div>
+      <button type="submit" class="btn primary">Enviar Pedido</button>
+    </form>
+
+    {% if messages %}
+      <ul class="messages">
+        {% for msg in messages %}
+          <li class="message {{ msg.tags }}">{{ msg }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
 {% endblock %}

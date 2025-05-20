@@ -2,22 +2,79 @@
 {% block title %}Pedidos de Amizade{% endblock %}
 {% block header %}Pedidos Recebidos{% endblock %}
 
+{% block extra_css %}
+  <style>
+    .pedidos-container {
+      max-width: 600px;
+      margin: 40px auto;
+      color: #fff;
+    }
+    .pedidos-container h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: var(--primary);
+    }
+    .pedido-card {
+      background: #1f1f1f;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .pedido-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .pedido-info span {
+      color: #aaa;
+      font-size: 0.9rem;
+    }
+    .pedido-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn.ghost {
+      background: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn.ghost:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+    .message-empty {
+      text-align: center;
+      color: #aaa;
+      margin-top: 2rem;
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
-<div class="container">
-  <h2>Pedidos de Amizade Recebidos</h2>
-  {% if pedidos %}
-    <ul class="pedidos-lista">
+  <div class="pedidos-container">
+    <h2>Pedidos de Amizade Recebidos</h2>
+    {% if pedidos %}
       {% for pedido in pedidos %}
-      <li>
-        <strong>{{ pedido.de_usuario.username }}</strong>
-        <span>(enviado em {{ pedido.data_criacao|date:"d/m/Y H:i" }})</span>
-        <a href="{% url 'amizades:aceitar_pedido' pedido.id %}" class="btn ghost">Aceitar</a>
-        <a href="{% url 'amizades:recusar_pedido' pedido.id %}" class="btn ghost">Recusar</a>
-      </li>
+        <div class="pedido-card">
+          <div class="pedido-info">
+            <strong>{{ pedido.de_usuario.username }}</strong>
+            <span>Enviado em {{ pedido.data_criacao|date:"d/m/Y H:i" }}</span>
+          </div>
+          <div class="pedido-actions">
+            <a href="{% url 'amizades:aceitar_pedido' pedido.id %}" class="btn ghost">Aceitar</a>
+            <a href="{% url 'amizades:recusar_pedido' pedido.id %}" class="btn ghost">Recusar</a>
+          </div>
+        </div>
       {% endfor %}
-    </ul>
-  {% else %}
-    <p>Nenhum pedido pendente.</p>
-  {% endif %}
-</div>
+    {% else %}
+      <p class="message-empty">Nenhum pedido pendente.</p>
+    {% endif %}
+  </div>
 {% endblock %}

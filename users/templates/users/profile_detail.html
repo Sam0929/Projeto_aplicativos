@@ -1,0 +1,108 @@
+{% extends 'treinos/base.html' %}
+{% load static %}
+{% block title %}Perfil de {{ usuario.username }}{% endblock %}
+{% block header %}Perfil de {{ usuario.username }}{% endblock %}
+
+{% block extra_css %}
+  <style>
+    .profile-container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #1f1f1f;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      color: #fff;
+    }
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      background: #2a2a2a;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;
+      color: #aaa;
+    }
+    .profile-details h2 {
+      margin: 0;
+      font-size: 1.6rem;
+      color: var(--primary);
+    }
+    .profile-details p {
+      margin: 0.25rem 0;
+      font-size: 0.95rem;
+      color: #ccc;
+    }
+    .profile-actions {
+      margin-top: 1.5rem;
+      text-align: right;
+    }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-secondary:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+    .btn-primary:hover {
+      background: #e55039;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="profile-container">
+    <div class="profile-header">
+      <!-- Avatar genérico: iniciais do username, ou coloque imagem, se tiver -->
+      <div class="profile-avatar">
+        {{ usuario.username|slice:":1"|upper }}
+      </div>
+      <div class="profile-details">
+        <h2>{{ usuario.get_full_name|default:usuario.username }}</h2>
+        <p>@{{ usuario.username }}</p>
+        {% if usuario.email %}
+          <p>{{ usuario.email }}</p>
+        {% endif %}
+        {# Se tiver outros campos (bio, cidade etc.), aqui aparecerão: #}
+        {# <p>{{ usuario.profile.bio }}</p> #}
+      </div>
+    </div>
+
+    {% if is_me %}
+      <div class="profile-actions">
+        <a href="{% url 'users-profile' %}" class="btn-secondary">Editar Meu Perfil</a>
+      </div>
+    {% else %}
+      <div class="profile-actions">
+        <a href="#" class="btn-primary" onclick="alert('Implementar lógica de mensagem ou compartilhar treino aqui')">
+          💬 Enviar Mensagem
+        </a>
+        <a href="{% url 'treinos:lista_treinos' %}" class="btn-secondary">
+          Ver Treinos
+        </a>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

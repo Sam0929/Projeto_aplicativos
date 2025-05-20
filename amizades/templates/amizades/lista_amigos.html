@@ -2,20 +2,96 @@
 {% block title %}Meus Amigos{% endblock %}
 {% block header %}Lista de Amigos{% endblock %}
 
+{% block extra_css %}
+  <style>
+    .lista-amigos-container {
+      max-width: 800px;
+      margin: 40px auto;
+      color: #fff;
+    }
+    .lista-amigos-container h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: var(--primary);
+    }
+    .amigos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .amigo-card {
+      background: #1f1f1f;
+      border-radius: 10px;
+      padding: 1.25rem;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .amigo-card h4 {
+      margin: 0.5rem 0 1rem;
+      color: #fff;
+      font-size: 1.1rem;
+    }
+    .amigo-actions {
+      margin-top: auto;
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn.secondary {
+      background: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn.secondary:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn.primary {
+      background: var(--primary);
+      color: #fff;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    .btn.primary:hover {
+      background: #e55039;
+    }
+    .message-empty {
+      text-align: center;
+      color: #aaa;
+      margin-top: 2rem;
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
-<div class="container">
-  <h2>Seus Amigos</h2>
-  {% if amigos %}
-    <ul class="amigos-lista">
-      {% for amigo in amigos %}
-      <li>
-        <span>{{ amigo.username }}</span>
-        <!-- Aqui, se quiser, coloque link para profile ou botão de remover amizade -->
-      </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p>Você ainda não tem amigos adicionados.</p>
-  {% endif %}
-</div>
+  <div class="lista-amigos-container">
+    <h2>Seus Amigos</h2>
+    {% if amigos %}
+      <div class="amigos-grid">
+        {% for amigo in amigos %}
+          <div class="amigo-card">
+            <h4>{{ amigo.username }}</h4>
+            <div class="amigo-actions">
+              <a href="{% url 'users:profile_detail' amigo.username %}" class="btn secondary">Ver Perfil</a>
+              <a href="{% url 'treinos:compartilhar_treino' treino_id=0 %}"
+                 class="btn primary" 
+                 style="opacity: 0.6; cursor: not-allowed;"
+                 title="Selecione um treino para compartilhar">Compartilhar Execução</a>
+              {# Se tiver lógica, substitua href pelo link real de compartilhamento de execução. #}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="message-empty">Você ainda não tem amigos adicionados.</p>
+    {% endif %}
+  </div>
 {% endblock %}
