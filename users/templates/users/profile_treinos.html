@@ -1,0 +1,121 @@
+{% extends 'treinos/base.html' %}
+{% load static %}
+
+{% block title %}Treinos de {{ user_alvo.username }}{% endblock %}
+{% block header %}Treinos de {{ user_alvo.username }}{% endblock %}
+
+{% block extra_css %}
+  <style>
+    /* Container geral */
+    .profile-treinos-container {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding-bottom: 40px;
+    }
+
+    /* Texto secundário indicando de quem é o perfil */
+    .info-user {
+      text-align: center;
+      color: #aaa;
+      margin-bottom: 1.5rem;
+      font-size: 1rem;
+    }
+
+    /* Grid de cards, responsivo */
+    .treinos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .treino-card {
+      background: #1f1f1f;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      color: #fff;
+      transition: transform 0.2s;
+    }
+    .treino-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .treino-card-body {
+      flex: 1;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .treino-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 0.75rem;
+    }
+
+    .treino-meta {
+      font-size: 0.9rem;
+      color: #ccc;
+      margin-bottom: 1.2rem;
+    }
+
+    .btn-ver {
+      align-self: flex-start;
+      background: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 0.5rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-ver:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .message-empty {
+      text-align: center;
+      color: #aaa;
+      margin-top: 2rem;
+      font-size: 1rem;
+    }
+  </style>
+{% endblock extra_css %}
+
+{% block content %}
+  <div class="profile-treinos-container">
+    <div class="info-user">
+      Exibindo todos os treinos de <strong>{{ user_alvo.username }}</strong>.
+    </div>
+
+    {% if treinos %}
+      <div class="treinos-grid">
+        {% for treino in treinos %}
+          <div class="treino-card">
+            <div class="treino-card-body">
+              <div>
+                <div class="treino-title">{{ treino.nome }}</div>
+                <div class="treino-meta">
+                  Grupos Musculares: {{ treino.grupomuscular_set.count }}
+                </div>
+              </div>
+              <a href="{% url 'treinos:detalhe_treino' treino.pk %}" class="btn-ver">
+                🔍 Ver Detalhes
+              </a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="message-empty">
+        {{ user_alvo.username }} ainda não criou nenhum treino.
+      </p>
+    {% endif %}
+  </div>
+{% endblock content %}

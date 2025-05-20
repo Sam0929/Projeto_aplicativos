@@ -7,7 +7,7 @@
 {% block extra_css %}
   <style>
     .amizades-container {
-      max-width: 500px;
+      max-width: 600px;
       margin: 40px auto;
       background: #1f1f1f;
       padding: 2rem;
@@ -47,6 +47,7 @@
       font-size: 1rem;
       margin-top: 0.5rem;
       transition: background 0.2s;
+      border: none;
     }
     .btn.primary:hover {
       background: #e55039;
@@ -76,19 +77,85 @@
     .messages .message.info {
       border-color: #3498db;
     }
+
+    /* Lista de resultados */
+    .results-list {
+      margin-top: 2rem;
+      list-style: none;
+      padding: 0;
+    }
+    .results-list li {
+      display: flex;
+      align-items: center;
+      background: #2a2a2a;
+      padding: 0.75rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    .results-list img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 1rem;
+      border: 2px solid var(--primary);
+    }
+    .results-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .results-info .username {
+      font-size: 1.1rem;
+      color: #fff;
+      margin-bottom: 0.25rem;
+    }
+    .results-info .view-profile {
+      font-size: 0.9rem;
+      color: #aaa;
+      text-decoration: none;
+    }
+    .results-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .results-actions form button,
+    .results-actions a.button {
+      background: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 0.5rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .results-actions form button:hover,
+    .results-actions a.button:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+    .already-friends {
+      font-size: 0.9rem;
+      color: #aaa;
+      font-weight: bold;
+    }
   </style>
 {% endblock %}
 
 {% block content %}
   <div class="amizades-container">
     <h2>Enviar Pedido de Amizade</h2>
-    <form method="post">
-      {% csrf_token %}
+
+    {# Form de busca (GET) #}
+    <form method="get">
       <div class="input-field">
-        <label for="id_username" class="field-label">Username do usuário</label>
-        <input type="text" id="id_username" name="username" placeholder="Digite o username exato" required>
+        <label for="id_username" class="field-label">Buscar por username</label>
+        <input type="text" id="id_username" name="username" placeholder="Digite parte do username" value="{{ query }}">
       </div>
-      <button type="submit" class="btn primary">Enviar Pedido</button>
+      <button type="submit" class="btn primary">Buscar</button>
     </form>
 
     {% if messages %}
@@ -97,6 +164,37 @@
           <li class="message {{ msg.tags }}">{{ msg }}</li>
         {% endfor %}
       </ul>
+    {% endif %}
+
+    {% if results %}
+      <ul class="results-list">
+        {% for user in results %}
+          <li>
+            {# Avatar do usuário #}
+            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}">
+
+            <div class="results-info">
+              <span class="username">{{ user.username }}</span>
+              <a href="{% url 'users:profile_detail' user.username %}" class="view-profile">Ver perfil</a>
+            </div>
+
+            <div class="results-actions">
+              {% if user.id in friend_ids %}
+                <span class="already-friends">Vocês já são amigos</span>
+              {% else %}
+                {# Form para enviar pedido – envia POST para a view de adicionar #}
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="target_username" value="{{ user.username }}">
+                  <button type="submit">Enviar Pedido</button>
+                </form>
+              {% endif %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% elif query %}
+      <p style="margin-top: 2rem; text-align: center; color: #aaa;">Nenhum usuário encontrado para “{{ query }}”.</p>
     {% endif %}
   </div>
 {% endblock %}

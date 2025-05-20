@@ -28,35 +28,37 @@ def lista_treinos(request):
 @login_required
 def detalhe_treino(request, pk):
     """
-    Se o treino for do próprio usuário, carrega normalmente.
-    Se não, verifica se existe CompartilhamentoTreino para este usuário.
-    Caso contrário, lança 404.
+    Exibe detalhes de um treino:
+    - Se for do próprio usuário -> acesso_proprio = True
+    - Se não for, verifica se existe CompartilhamentoTreino para este usuário.
+      Caso exista, mostra “🔗 Compartilhado por …”, caso contrário, permite visualizar normalmente.
     """
-    # 1. Tenta buscar o treino como sendo do próprio usuário
-    try:
-        treino = Treino.objects.prefetch_related(
-            'grupomuscular_set__exercicio_set'
-        ).get(pk=pk, usuario=request.user)
-        acesso_proprio = True
-    except Treino.DoesNotExist:
-        # 2. Se não encontrou, verifica se foi compartilhado com o usuário
-        treino = get_object_or_404(
-            Treino.objects.prefetch_related('grupomuscular_set__exercicio_set'),
-            pk=pk
-        )
-        acesso_proprio = False
-        # Verifica se existe um compartilhamento para este treino e para este usuário
-        tem_acesso = CompartilhamentoTreino.objects.filter(
+
+    # 1) Busca o treino sem filtrar por usuário, só pelo ID
+    treino = get_object_or_404(
+        Treino.objects.prefetch_related('grupomuscular_set__exercicio_set', 'usuario'),
+        pk=pk
+    )
+
+    # 2) Verifica se é acesso do próprio dono
+    acesso_proprio = (treino.usuario == request.user)
+
+    # 3) Se não for o próprio dono, tenta obter o compartilhamento
+    compartilhamento = None
+    if not acesso_proprio:
+        compartilhamento = CompartilhamentoTreino.objects.filter(
             treino=treino,
             para_usuario=request.user
-        ).exists()
-        if not tem_acesso:
-            raise Http404("Você não tem permissão para ver este treino.")
+        ).first()
+        # Observação: não lançamos 404 se não tiver compartilhamento,
+        # pois agora qualquer um pode ver o treino. Apenas exibiremos se veio compartilhado.
 
     return render(request, 'treinos/detalhe_treino.html', {
         'treino': treino,
-        'acesso_proprio': acesso_proprio
+        'acesso_proprio': acesso_proprio,
+        'compartilhamento': compartilhamento,
     })
+
 
 
 
@@ -374,3 +376,41 @@ def compartilhar_treino(request, treino_id):
         'treino': treino,
         'amigos': amigos
     })
+    
+@login_required
+def adicionar_treino(request, pk):
+    """
+    Clona o treino (com todos os grupos e exercícios) para o usuário logado,
+    renomeando o novo como “<nome original> (Cópia)”.
+    """
+    treino_original = get_object_or_404(
+        Treino.objects.prefetch_related('grupomuscular_set__exercicio_set'),
+        pk=pk
+    )
+
+    if request.method == 'POST':
+        # 1) Cria o novo treino para o request.user
+        novo_treino = Treino.objects.create(
+            nome=f"{treino_original.nome} (Cópia)",
+            usuario=request.user
+        )
+        # 2) Copia todos os grupos e exercícios
+        for grupo in treino_original.grupomuscular_set.all():
+            novo_grupo = GrupoMuscular.objects.create(
+                nome=grupo.nome,
+                treino=novo_treino
+            )
+            for exercicio in grupo.exercicio_set.all():
+                Exercicio.objects.create(
+                    nome=exercicio.nome,
+                    series=exercicio.series,
+                    repeticoes=exercicio.repeticoes,
+                    descanso=exercicio.descanso,
+                    carga_maxima=exercicio.carga_maxima,
+                    grupo=novo_grupo
+                )
+        # 3) Redireciona para a página de detalhes do novo treino
+        return redirect('treinos:detalhe_treino', pk=novo_treino.pk)
+
+    # Se o método não for POST, redireciona de volta ao detalhe original
+    return redirect('treinos:detalhe_treino', pk=treino_original.pk)

@@ -9,4 +9,5 @@ urlpatterns = [
     path('register/', views.RegisterView.as_view(), name='users-register'),
     path('profile/', views.profile, name='users-profile'),      # /users/profile/
     path('profile/<str:username>/', views.profile_detail, name='profile_detail'),
+    path('profile/<str:username>/treinos/', views.profile_treinos, name='profile_treinos'),
 ]

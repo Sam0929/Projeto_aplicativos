@@ -14,4 +14,5 @@ urlpatterns = [
     path('<int:pk>/excluir/', views.excluir_treino, name='excluir_treino'),
     path('<int:treino_id>/iniciar/', views.iniciar_treino, name='iniciar_treino'),
     path('compartilhar/<int:treino_id>/', views.compartilhar_treino, name='compartilhar_treino'),
+    path('<int:pk>/adicionar/', views.adicionar_treino, name='adicionar_treino'),
 ]

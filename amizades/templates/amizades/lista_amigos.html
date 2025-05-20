@@ -14,31 +14,58 @@
       margin-bottom: 1.5rem;
       color: var(--primary);
     }
+
     .amigos-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 1rem;
     }
+
     .amigo-card {
       background: #1f1f1f;
       border-radius: 10px;
-      padding: 1.25rem;
+      overflow: hidden;
       box-shadow: 0 6px 20px rgba(0,0,0,0.3);
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-    }
-    .amigo-card h4 {
-      margin: 0.5rem 0 1rem;
       color: #fff;
-      font-size: 1.1rem;
     }
+
+    /* Aqui usamos a capa como pano de fundo */
+    .amigo-cover {
+      width: 100%;
+      height: 100px;
+      background-color: #333;
+      background-size: cover;
+      background-position: center;
+    }
+
+    /* Avatar centralizado, sobreposto à capa */
+    .amigo-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 3px solid var(--primary);
+      margin-top: -32px; /* metade da altura do avatar, para sobrepor */
+      object-fit: cover;
+      background: #555;
+    }
+
+    .amigo-card h4 {
+      margin: 0.5rem 0 0.5rem;
+      font-size: 1.1rem;
+      color: #fff;
+    }
+
     .amigo-actions {
       margin-top: auto;
       display: flex;
       gap: 0.5rem;
+      padding-bottom: 1rem;
     }
+
     .btn.secondary {
       background: transparent;
       border: 1px solid var(--primary);
@@ -47,11 +74,13 @@
       border-radius: 6px;
       font-size: 0.9rem;
       transition: background 0.2s, color 0.2s;
+      text-decoration: none;
     }
     .btn.secondary:hover {
       background: var(--primary);
       color: #fff;
     }
+
     .btn.primary {
       background: var(--primary);
       color: #fff;
@@ -59,10 +88,12 @@
       border-radius: 6px;
       font-size: 0.9rem;
       transition: background 0.2s;
+      text-decoration: none;
     }
     .btn.primary:hover {
       background: #e55039;
     }
+
     .message-empty {
       text-align: center;
       color: #aaa;
@@ -74,18 +105,24 @@
 {% block content %}
   <div class="lista-amigos-container">
     <h2>Seus Amigos</h2>
+
     {% if amigos %}
       <div class="amigos-grid">
         {% for amigo in amigos %}
           <div class="amigo-card">
+            {# Capa de fundo #}
+            <div class="amigo-cover"
+                 {% if amigo.profile.cover_photo %}
+                   style="background-image: url('{{ amigo.profile.cover_photo.url }}')"
+                 {% endif %}>
+            </div>
+            {# Avatar sobreposto #}
+            <img src="{{ amigo.profile.avatar.url }}" alt="{{ amigo.username }}" class="amigo-avatar">
+
             <h4>{{ amigo.username }}</h4>
             <div class="amigo-actions">
               <a href="{% url 'users:profile_detail' amigo.username %}" class="btn secondary">Ver Perfil</a>
-              <a href="{% url 'treinos:compartilhar_treino' treino_id=0 %}"
-                 class="btn primary" 
-                 style="opacity: 0.6; cursor: not-allowed;"
-                 title="Selecione um treino para compartilhar">Compartilhar Execução</a>
-              {# Se tiver lógica, substitua href pelo link real de compartilhamento de execução. #}
+              <a href="#" class="btn primary" style="opacity: 0.6; cursor: not-allowed;" title="Selecione um treino para compartilhar">Compartilhar Execução</a>
             </div>
           </div>
         {% endfor %}

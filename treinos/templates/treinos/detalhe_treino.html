@@ -14,7 +14,7 @@
     </div>
   </div>
 
-  {% if not acesso_proprio %}
+  {% if not acesso_proprio and compartilhamento %}
     <div style="background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; display: inline-block;">
       <span style="font-size: 0.9rem; color: var(--primary);">🔗 Compartilhado por <strong>{{ treino.usuario.username }}</strong></span>
     </div>
@@ -41,17 +41,51 @@
     </div>
   {% endfor %}
 
-  <div class="actions" style="margin-top: 24px; display: flex; gap: 12px;">
+  <div class="actions" style="margin-top: 24px; display: flex; align-items: center; gap: 12px;">
     {% if acesso_proprio %}
-      <a class="btn edit" href="{% url 'treinos:editar_treino' treino.pk %}" style="background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 12px; border-radius: 6px;">✏️ Editar</a>
-      <form action="{% url 'treinos:excluir_treino' treino.pk %}" method="post" style="display: inline;">
-        {% csrf_token %}
-        <button type="submit" class="btn delete" style="background: transparent; border: 1px solid #e74c3c; color: #e74c3c; padding: 8px 12px; border-radius: 6px;">🗑️ Excluir</button>
-      </form>
-      <a class="btn start" href="{% url 'treinos:iniciar_treino' treino.pk %}" style="background: var(--primary); color: #fff; padding: 8px 12px; border-radius: 6px;">▶️ Iniciar</a>
-      <a class="btn share" href="{% url 'treinos:compartilhar_treino' treino.pk %}" style="background: transparent; border: 1px solid #fff; color: #fff; padding: 8px 12px; border-radius: 6px;">🤝 Compartilhar</a>
+      <div style="display: flex; gap: 12px;">
+        <a 
+          href="{% url 'treinos:editar_treino' treino.pk %}" 
+          style="background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 12px; border-radius: 6px; text-decoration: none;">
+          ✏️ Editar
+        </a>
+
+        <form action="{% url 'treinos:excluir_treino' treino.pk %}" method="post" style="display: inline;">
+          {% csrf_token %}
+          <button 
+            type="submit" 
+            style="background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 12px; border-radius: 6px; cursor: pointer;">
+            🗑️ Excluir
+          </button>
+        </form>
+
+        <a 
+          href="{% url 'treinos:iniciar_treino' treino.pk %}" 
+          style="background: var(--primary); color: #fff; padding: 8px 12px; border-radius: 6px; text-decoration: none;">
+          ▶️ Iniciar
+        </a>
+      </div>
+
+      <a 
+        href="{% url 'treinos:compartilhar_treino' treino.pk %}" 
+        style="margin-left: auto; background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 12px; border-radius: 6px; text-decoration: none;">
+        🤝 Compartilhar
+      </a>
     {% else %}
-      <a class="btn start" href="{% url 'treinos:iniciar_treino' treino.pk %}" style="background: var(--primary); color: #fff; padding: 8px 12px; border-radius: 6px;">▶️ Iniciar</a>
+      <form action="{% url 'treinos:adicionar_treino' treino.pk %}" method="post" style="display: flex; gap: 12px;">
+        {% csrf_token %}
+        <button 
+          type="submit" 
+          style="background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 12px; border-radius: 6px; cursor: pointer;">
+          ➕ Adicionar ao meu perfil
+        </button>
+      </form>
+
+      <a 
+        href="{% url 'treinos:compartilhar_treino' treino.pk %}" 
+        style="margin-left: auto; background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 12px; border-radius: 6px; text-decoration: none;">
+        🤝 Compartilhar
+      </a>
     {% endif %}
   </div>
 </div>

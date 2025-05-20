@@ -14,27 +14,60 @@
       margin-bottom: 1.5rem;
       color: var(--primary);
     }
+
     .pedido-card {
       background: #1f1f1f;
       border-radius: 10px;
-      padding: 1rem 1.25rem;
       margin-bottom: 1rem;
       box-shadow: 0 6px 20px rgba(0,0,0,0.3);
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      overflow: hidden;
     }
+
+    /* Capa em miniatura para pedido */
+    .pedido-cover {
+      width: 100px;
+      height: 80px;
+      background-color: #333;
+      background-size: cover;
+      background-position: center;
+      flex-shrink: 0;
+    }
+
+    /* Avatar abaixo da capa, centralizado verticalmente */
+    .pedido-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid var(--primary);
+      object-fit: cover;
+      background: #555;
+      margin-left: -24px; /* metade da largura do avatar, para sobrepor */
+      z-index: 1;
+    }
+
     .pedido-info {
+      flex: 1;
       display: flex;
       flex-direction: column;
+      justify-content: center;
+      padding: 0.75rem 1rem;
+    }
+    .pedido-info strong {
+      color: #fff;
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
     }
     .pedido-info span {
       color: #aaa;
       font-size: 0.9rem;
     }
+
     .pedido-actions {
       display: flex;
       gap: 0.5rem;
+      padding-right: 1rem;
     }
     .btn.ghost {
       background: transparent;
@@ -44,11 +77,14 @@
       border-radius: 6px;
       font-size: 0.9rem;
       transition: background 0.2s, color 0.2s;
+      text-decoration: none;
+      cursor: pointer;
     }
     .btn.ghost:hover {
       background: var(--primary);
       color: #fff;
     }
+
     .message-empty {
       text-align: center;
       color: #aaa;
@@ -60,13 +96,25 @@
 {% block content %}
   <div class="pedidos-container">
     <h2>Pedidos de Amizade Recebidos</h2>
+
     {% if pedidos %}
       {% for pedido in pedidos %}
         <div class="pedido-card">
+          {# Mini capa do remetente #}
+          <div class="pedido-cover"
+               {% if pedido.de_usuario.profile.cover_photo %}
+                 style="background-image: url('{{ pedido.de_usuario.profile.cover_photo.url }}')"
+               {% endif %}>
+          </div>
+
+          {# Avatar sobreposto à capa #}
+          <img src="{{ pedido.de_usuario.profile.avatar.url }}" alt="{{ pedido.de_usuario.username }}" class="pedido-avatar">
+
           <div class="pedido-info">
             <strong>{{ pedido.de_usuario.username }}</strong>
             <span>Enviado em {{ pedido.data_criacao|date:"d/m/Y H:i" }}</span>
           </div>
+
           <div class="pedido-actions">
             <a href="{% url 'amizades:aceitar_pedido' pedido.id %}" class="btn ghost">Aceitar</a>
             <a href="{% url 'amizades:recusar_pedido' pedido.id %}" class="btn ghost">Recusar</a>

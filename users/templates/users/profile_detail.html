@@ -1,108 +1,157 @@
 {% extends 'treinos/base.html' %}
 {% load static %}
+
 {% block title %}Perfil de {{ usuario.username }}{% endblock %}
 {% block header %}Perfil de {{ usuario.username }}{% endblock %}
 
 {% block extra_css %}
-  <style>
-    .profile-container {
-      max-width: 600px;
-      margin: 40px auto;
-      background: #1f1f1f;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-      color: #fff;
-    }
-    .profile-header {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    .profile-avatar {
-      width: 80px;
-      height: 80px;
-      background: #2a2a2a;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 2rem;
-      color: #aaa;
-    }
-    .profile-details h2 {
-      margin: 0;
-      font-size: 1.6rem;
-      color: var(--primary);
-    }
-    .profile-details p {
-      margin: 0.25rem 0;
-      font-size: 0.95rem;
-      color: #ccc;
-    }
-    .profile-actions {
-      margin-top: 1.5rem;
-      text-align: right;
-    }
-    .btn-secondary {
-      background: transparent;
-      border: 1px solid var(--primary);
-      color: var(--primary);
-      padding: 0.6rem 1rem;
-      border-radius: 6px;
-      font-size: 0.95rem;
-      transition: background 0.2s, color 0.2s;
-    }
-    .btn-secondary:hover {
-      background: var(--primary);
-      color: #fff;
-    }
-    .btn-primary {
-      background: var(--primary);
-      color: #fff;
-      padding: 0.6rem 1rem;
-      border-radius: 6px;
-      font-size: 0.95rem;
-      transition: background 0.2s;
-    }
-    .btn-primary:hover {
-      background: #e55039;
-    }
-  </style>
-{% endblock %}
+<style>
+  .cover {
+    width: 100%;
+    height: 180px;
+    background-color: #444;
+    background-size: cover;
+    background-position: center;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+  }
+  .profile-container {
+    max-width: 650px;
+    margin: -100px auto 40px;
+    padding: 2rem;
+    background: rgba(0,0,0,0.6); /* tom mais suave */
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    color: #fff;
+    position: relative;
+  }
+  .profile-avatar {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    border: 4px solid rgba(0,0,0,0.6);
+    object-fit: cover;
+    background: #555;
+    position: absolute;
+    top: -50px; left: 50%;
+    transform: translateX(-50%);
+  }
+  .profile-header {
+    text-align: center;
+    margin-top: 60px; margin-bottom: 1.5rem;
+  }
+  .profile-header h2 { color: var(--primary); font-size: 1.8rem; margin: .5rem 0 .2rem; }
+  .profile-header p { color: #ddd; font-size: .95rem; margin: 0; }
+
+  .profile-info {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem 2rem;
+    margin-bottom: 1.5rem;
+  }
+  .info-item {
+    display: flex; align-items: center; gap: .5rem;
+    color: #eee; font-size: .95rem;
+  }
+  .info-item .emoji { font-size: 1.2rem; line-height:1; }
+  .info-item .label { font-weight: bold; color:#fff; }
+
+  /* Agrupar Academia + Dados Pessoais */
+  .group-header {
+    grid-column: span 2;
+    margin-top: 1rem; margin-bottom: .5rem;
+    font-size: 1.1rem; color: var(--primary);
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+    padding-bottom: .25rem;
+  }
+
+  .profile-bio-container {
+    background: rgba(0,0,0,0.4);
+    padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;
+  }
+  .profile-bio-container h3 { color: var(--primary); margin:0 0 .5rem; }
+  .profile-bio { color: #eee; line-height:1.4; }
+
+  .profile-actions { text-align:center; }
+  .profile-actions .btn {
+    margin:.3rem; padding:.6rem 1.2rem; font-size:.95rem; border-radius:6px;
+    transition: background .2s, color .2s;
+  }
+  .btn-primary { background: var(--primary); color:#fff; }
+  .btnout { background:transparent; border:1px solid var(--primary); color:var(--primary);}
+  .btnout:hover { background: var(--primary); color:#fff; }
+</style>
+{% endblock extra_css %}
 
 {% block content %}
+  <div class="cover"
+       {% if profile.cover_photo %}
+         style="background-image:url('{{ profile.cover_photo.url }}')"
+       {% endif %}></div>
+
   <div class="profile-container">
+    <img src="{{ profile.avatar.url }}" class="profile-avatar" alt="Avatar">
+
     <div class="profile-header">
-      <!-- Avatar genérico: iniciais do username, ou coloque imagem, se tiver -->
-      <div class="profile-avatar">
-        {{ usuario.username|slice:":1"|upper }}
-      </div>
-      <div class="profile-details">
-        <h2>{{ usuario.get_full_name|default:usuario.username }}</h2>
-        <p>@{{ usuario.username }}</p>
-        {% if usuario.email %}
-          <p>{{ usuario.email }}</p>
-        {% endif %}
-        {# Se tiver outros campos (bio, cidade etc.), aqui aparecerão: #}
-        {# <p>{{ usuario.profile.bio }}</p> #}
-      </div>
+      <h2>{{ usuario.get_full_name|default:usuario.username }}</h2>
+      <p>@{{ usuario.username }}</p>
     </div>
 
-    {% if is_me %}
-      <div class="profile-actions">
-        <a href="{% url 'users-profile' %}" class="btn-secondary">Editar Meu Perfil</a>
-      </div>
-    {% else %}
-      <div class="profile-actions">
-        <a href="#" class="btn-primary" onclick="alert('Implementar lógica de mensagem ou compartilhar treino aqui')">
-          💬 Enviar Mensagem
-        </a>
-        <a href="{% url 'treinos:lista_treinos' %}" class="btn-secondary">
-          Ver Treinos
-        </a>
+    <div class="profile-info">
+      <div class="group-header">Dados Pessoais</div>
+      {% if usuario.email %}
+        <div class="info-item"><span class="emoji">📧</span><span class="label">Email:</span>{{ usuario.email }}</div>
+      {% endif %}
+      {% if profile.show_age and profile.age %}
+        <div class="info-item"><span class="emoji">🎂</span><span class="label">Idade:</span>{{ profile.age }} anos</div>
+      {% endif %}
+
+      <div class="group-header">Academia</div>
+      {% if profile.show_weight and profile.weight %}
+        <div class="info-item"><span class="emoji">⚖️</span><span class="label">Peso:</span>{{ profile.weight }} kg</div>
+      {% endif %}
+      {% if profile.show_height and profile.height %}
+        <div class="info-item"><span class="emoji">📏</span><span class="label">Altura:</span>{{ profile.height }} cm</div>
+      {% endif %}
+      {% if profile.show_experience and profile.experience_years %}
+        <div class="info-item"><span class="emoji">🏅</span><span class="label">Experiência:</span>{{ profile.experience_years }} anos</div>
+      {% endif %}
+
+      <div class="group-header">Outros</div>
+      {% if profile.location %}
+        <div class="info-item"><span class="emoji">📍</span><span class="label">Localização:</span>{{ profile.location }}</div>
+      {% endif %}
+      {% if profile.gender %}
+        <div class="info-item"><span class="emoji">⚧</span><span class="label">Gênero:</span>{{ profile.get_gender_display }}</div>
+      {% endif %}
+      {% if profile.relationship_status %}
+        <div class="info-item"><span class="emoji">♥️</span><span class="label">Status:</span>{{ profile.get_relationship_status_display }}</div>
+      {% endif %}
+      {% if interests_list %}
+        <div class="interests-group" style="grid-column:span 2;">
+          <div class="info-item"><span class="emoji">🏷️</span><span class="label">Interesses:</span></div>
+          <div>
+            {% for tag in interests_list %}
+              <span class="badge bg-secondary">{{ tag }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if profile.bio %}
+      <div class="profile-bio-container">
+        <h3>📝 Bio</h3>
+        <div class="profile-bio">{{ profile.bio }}</div>
       </div>
     {% endif %}
+
+    <div class="profile-actions">
+      {% if is_me %}
+        <a href="{% url 'users:users-profile' %}" class="btn btnout">✏️ Editar Perfil</a>
+      {% else %}
+        <a href="#" class="btn btn-primary">💬 Enviar Mensagem</a>
+        <a href="{% url 'users:profile_treinos' usuario.username %}" class="btn btnout">💪 Ver Treinos</a>
+      {% endif %}
+    </div>
   </div>
-{% endblock %}
+{% endblock content %}

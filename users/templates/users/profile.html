@@ -1,87 +1,178 @@
 {% extends "users/base.html" %}
+{% load static %}
 
-{% block title %}Profile Page{% endblock title %}
+{% block title %}Editar Perfil{% endblock %}
+
+{% block extra_css %}
+<style>
+  .edit-cover-container {
+    position: relative; width:100%; height:180px; margin-bottom:2rem;
+    border-radius:8px; overflow:hidden;
+  }
+  .edit-cover {
+    width:100%; height:100%; background-color:#444;
+    background-size:cover; background-position:center;
+  }
+  .cover-overlay {
+    position:absolute; inset:0;
+    background:rgba(0,0,0,0.4);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:opacity .2s; cursor:pointer;
+  }
+  .edit-cover-container:hover .cover-overlay { opacity:1; }
+  .cover-overlay i { font-size:2rem; color:#fff; }
+
+  .edit-container {
+    max-width:700px; margin:-80px auto 40px;
+    background:#1f1f1f !important;
+    border-radius:12px; padding:2rem;
+    box-shadow:0 6px 20px rgba(0,0,0,0.3); position:relative;
+  }
+
+  .avatar-container {
+    position:absolute; top:-50px; left:50%;
+    transform:translateX(-50%);
+    width:100px; height:100px; border-radius:50%;
+    overflow:hidden; border:4px solid rgba(0,0,0,0.6);
+    cursor:pointer;
+  }
+  .edit-avatar { width:100%; height:100%; object-fit:cover; background:#555; }
+  .avatar-overlay {
+    position:absolute; inset:0;
+    background:rgba(0,0,0,0.5);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:opacity .2s;
+  }
+  .avatar-container:hover .avatar-overlay { opacity:1; }
+  .avatar-overlay i { font-size:1.5rem; color:#fff; }
+
+  .edit-header { text-align:center; margin-top:60px; margin-bottom:1.5rem; color:#fff; }
+  .edit-header h2 { color:var(--primary); font-size:1.8rem; }
+
+  .form-section { margin-bottom:1.5rem; }
+  .form-section h4 {
+    color:var(--primary); margin-bottom:.75rem;
+    border-bottom:1px solid rgba(255,255,255,0.3);
+    padding-bottom:.25rem;
+  }
+  .row.g-3 > [class*="col-"] label {
+    color:#ccc; font-weight:500;
+  }
+  .row.g-3 > [class*="col-"] input,
+  .row.g-3 > [class*="col-"] select {
+    background:#2a2a2a; border:1px solid #444; color:#eee;
+  }
+
+  .btn-save { background:var(--primary); color:#fff; }
+  .btn-reset {
+    background:transparent; border:1px solid var(--primary);
+    color:var(--primary);
+  }
+</style>
+{% endblock extra_css %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <!-- Imagem do perfil -->
-        <div class="col-md-3 text-center mb-5">
-            <img 
-                class="rounded-circle account-img img-fluid" 
-                src="{{ user.profile.avatar.url }}" 
-                alt="User Avatar" 
-                style="cursor: pointer; width: 120px; height: 120px; object-fit: cover;"
-            />
-        </div>
-        
-        <!-- Formulário -->
-        <div class="col-md-9">
-
-            {% if user_form.errors %}
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <strong>Erro ao salvar mudanças:</strong>
-                    <ul>
-                        {% for key, value in user_form.errors.items %}
-                            <li>{{ value }}</li>
-                        {% endfor %}
-                    </ul>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endif %}
-
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="row g-4"> <!-- Aumentando o espaçamento entre as colunas -->
-                    <!-- Username e Email -->
-                    <div class="col-md-6 mb-4"> <!-- Aumentando a margem inferior -->
-                        <label for="username" class="form-label">Username:</label>
-                        {{ user_form.username }}
-                    </div>
-                    <div class="col-md-6 mb-4"> <!-- Aumentando a margem inferior -->
-                        <label for="email" class="form-label">Email:</label>
-                        {{ user_form.email }}
-                    </div>
-                    <div class="col-md-6 mb-4"> <!-- Aumentando a margem inferior -->
-                        <label for="email" class="form-label">Email:</label>
-                        {{ user_form.email }}
-                    </div>
-
-                    
-                    <div class="col-md-12 mb-4">
-                        <div class="row d-flex justify-content-between align-items-center">
-                            {% if not user.social_auth.exists %}
-                            <div class="col-md-6">
-                                <a href="{% url 'password_change' %}" class="btn btn-primary w-50">Alterar Senha</a>
-                            </div>
-
-                            {% endif %}
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center w-100">
-                                    <label for="avatar" class="form-label me-2">Alterar Avatar:</label>
-                                    <input type="file" class="form-control w-70" id="avatar" name="avatar">
-                                </div>
-                            </div>
-
-                            
-                            
-                        </div>
-                    </div>
-
-                    <!-- Bio -->
-                    <div class="col-md-12 mb-4"> <!-- Aumentando a margem inferior -->
-                        <label for="bio" class="form-label">Bio:</label>
-                        {{ profile_form.bio }}
-                    </div>
-                </div>
-
-                <!-- Botões -->
-                <div class="d-flex justify-content-end mt-4">
-                    <button type="submit" class="btn btn-primary me-3">Salvar alterações</button>
-                    <button type="reset" class="btn btn-secondary">Resetar</button>
-                </div>
-            </form>
-        </div>
+  <div class="edit-cover-container">
+    <div class="edit-cover" id="coverPreview"
+         {% if user.profile.cover_photo %}
+           style="background-image:url('{{ user.profile.cover_photo.url }}')"
+         {% endif %}></div>
+    <div class="cover-overlay" onclick="document.getElementById('id_cover_photo').click()">
+      <i class="fas fa-pencil-alt"></i>
     </div>
-</div>
+  </div>
+
+  <div class="edit-container">
+    <div class="avatar-container" onclick="document.getElementById('id_avatar').click()">
+      <img src="{{ user.profile.avatar.url }}" class="edit-avatar" alt="Avatar" id="avatarPreview">
+      <div class="avatar-overlay"><i class="fas fa-pencil-alt"></i></div>
+    </div>
+
+    <div class="edit-header"><h2>Editar Perfil</h2></div>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="row g-3 form-section">
+        <h4>Básico</h4>
+        <div class="col-md-6"><label>Username</label>{{ user_form.username }}</div>
+        <div class="col-md-6"><label>Email</label>{{ user_form.email }}</div>
+        <div class="col-md-4"><label>Idade</label>{{ profile_form.age }}</div>
+        <div class="col-md-4"><label>Peso (kg)</label>{{ profile_form.weight }}</div>
+        <div class="col-md-4"><label>Altura (cm)</label>{{ profile_form.height }}</div>
+      </div>
+
+      <div class="row g-3 form-section">
+        <h4>Academia</h4>
+        <div class="col-md-6"><label>Anos de Experiência</label>{{ profile_form.experience_years }}</div>
+      </div>
+
+      <div class="row g-3 form-section">
+        <h4>Privacidade</h4>
+        <div class="col-md-4"><label>Mostrar Peso?</label>{{ profile_form.show_weight }}</div>
+        <div class="col-md-4"><label>Mostrar Altura?</label>{{ profile_form.show_height }}</div>
+        <div class="col-md-4"><label>Mostrar Experiência?</label>{{ profile_form.show_experience }}</div>
+      </div>
+
+      <div class="row g-3 form-section">
+        <h4>Rede Social</h4>
+        <div class="col-md-6"><label>Localização</label>{{ profile_form.location }}</div>
+        <div class="col-md-3"><label>Gênero</label>{{ profile_form.gender }}</div>
+        <div class="col-md-3"><label>Status</label>{{ profile_form.relationship_status }}</div>
+      </div>
+
+      <div class="row g-3 form-section">
+        <h4>Interesses e Bio</h4>
+        <div class="col-md-12"><label>Interesses</label>{{ profile_form.interests }}</div>
+        <div class="col-md-12"><label>Bio</label>{{ profile_form.bio }}</div>
+      </div>
+
+      <!-- Inputs escondidos com accept restrito -->
+      <input type="file" id="id_avatar" name="avatar" hidden accept="image/*" onchange="previewImage(this, 'avatarPreview')">
+      <input type="file" id="id_cover_photo" name="cover_photo" hidden accept="image/*" onchange="previewCover(this)">
+
+      <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-save me-2">Salvar</button>
+        <button type="reset" class="btn btn-reset" onclick="resetPreview()">Resetar</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const originalAvatar = document.getElementById('avatarPreview').src;
+    const originalCover = document.getElementById('coverPreview').style.backgroundImage;
+
+    function previewImage(input, targetId) {
+      const file = input.files[0];
+      if (file && file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          document.getElementById(targetId).src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        input.value = "";
+      }
+    }
+
+    function previewCover(input) {
+      const file = input.files[0];
+      if (file && file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          document.getElementById("coverPreview").style.backgroundImage = `url('${e.target.result}')`;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        input.value = "";
+      }
+    }
+
+    function resetPreview() {
+      document.getElementById('avatarPreview').src = originalAvatar;
+      document.getElementById('coverPreview').style.backgroundImage = originalCover;
+      document.getElementById('id_avatar').value = '';
+      document.getElementById('id_cover_photo').value = '';
+    }
+  </script>
 {% endblock content %}

@@ -8,6 +8,8 @@ from django.contrib.auth.decorators import login_required
 from treinos.models import Treino, ExecucaoTreino,CompartilhamentoTreino
 from .forms import RegisterForm, LoginForm, UpdateUserForm, UpdateProfileForm 
 from django.contrib.auth import get_user_model
+from amizades.models import Amizade, PedidoAmizade
+from django.db.models import Q
 
 
 @login_required
@@ -90,13 +92,13 @@ class ResetPasswordView(SuccessMessageMixin, PasswordResetView):
                       "if an account exists with the email you entered. You should receive them shortly." \
                       " If you don't receive an email, " \
                       "please make sure you've entered the address you registered with, and check your spam folder."
-    success_url = reverse_lazy('users-home')
+    success_url = reverse_lazy('users:users-home')
 
 
 class ChangePasswordView(SuccessMessageMixin, PasswordChangeView):
     template_name = 'users/change_password.html'
     success_message = "Successfully Changed Your Password"
-    success_url = reverse_lazy('users-home')
+    success_url = reverse_lazy('users:users-home')
 
 
 @login_required
@@ -109,30 +111,57 @@ def profile(request):
             user_form.save()
             profile_form.save()
             messages.success(request, 'Your profile is updated successfully')
-            return redirect(to='users-profile')
+            return redirect(to='users:users-profile')
     else:
         user_form = UpdateUserForm(instance=request.user)
         profile_form = UpdateProfileForm(instance=request.user.profile)
 
     return render(request, 'users/profile.html', {'user_form': user_form, 'profile_form': profile_form})
 
+
 User = get_user_model()
 
 @login_required
 def profile_detail(request, username):
-    """
-    Exibe o perfil de outro usuário identificado pelo `username`.
-    Se o username não existir, retorna 404.
-    """
-    # Busca o usuário cujo perfil desejamos ver
     usuario = get_object_or_404(User, username=username)
 
-    # Se quiser evitar ver o próprio perfil aqui, poderia redirecionar para 'users-profile',
-    # mas normalmente exibimos tudo de forma read-only.
-    is_me = (usuario == request.user)
+    # interesses
+    interests_list = []
+    if usuario.profile.interests:
+        interests_list = [
+            tag.strip()
+            for tag in usuario.profile.interests.split(',')
+            if tag.strip()
+        ]
 
-    # Se tiver campos extras (ex: bio, foto, etc.), adicione aqui.
+    # dados de academia (já no objeto profile)
+    profile = usuario.profile
+
     return render(request, 'users/profile_detail.html', {
         'usuario': usuario,
-        'is_me': is_me,
+        'interests_list': interests_list,
+        'profile': profile,
+        'is_me': usuario == request.user,
+    })
+    
+@login_required
+def profile_treinos(request, username):
+    """
+    Exibe todos os treinos do usuário 'username', 
+    sem necessidade de compartilhamento.
+    Se for o próprio request.user, redireciona para lista_treinos padrão.
+    """
+    user_alvo = get_object_or_404(User, username=username)
+
+    if user_alvo == request.user:
+        return redirect('treinos:lista_treinos')
+
+    # Agora traz todos os treinos desse user_alvo
+    treinos = Treino.objects.filter(
+        usuario=user_alvo
+    ).prefetch_related('grupomuscular_set')
+
+    return render(request, 'users/profile_treinos.html', {
+        'treinos': treinos,
+        'user_alvo': user_alvo
     })

@@ -1,121 +1,107 @@
 {% extends "users/base.html" %}
+{% load static %}
+
+{% block title %}Criar Conta{% endblock %}
+
+{% block extra_css %}
+<style>
+  .reg-card {
+    max-width: 500px;
+    margin: 3rem auto;
+    background: #1f1f1f;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    color: #fff;
+  }
+  .reg-card .card-header {
+    background: var(--primary);
+    color: #fff;
+    text-align: center;
+    font-size: 1.5rem;
+  }
+  .reg-card .card-body {
+    padding: 2rem;
+  }
+  .reg-card label {
+    color: #ccc;
+    font-weight: 500;
+  }
+  .reg-card input {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    color: #eee;
+  }
+  .btn-register {
+    background: var(--primary);
+    color: #fff;
+  }
+</style>
+{% endblock extra_css %}
+
 {% block content %}
-    <div class="form-content my-4 p-4">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-lg-6">
-                    <div class="card shadow-lg border-0 rounded-lg mt-0 mb-3">
-                        <div class="card-header text-center">
-                            <h3 class="font-weight-light my-4">Criar uma conta</h3>
-                        </div>
+<div class="card reg-card">
+  <div class="card-header">Criar Conta</div>
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
 
-                        {% if form.errors %}
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <strong>Erro(s) ao processar o formulário:</strong>
-                            <ul class="mb-0">
-                                {% for key, value in form.errors.items %}
-                                    <li>{{ value }}</li>
-                                {% endfor %}
-                            </ul>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                        {% endif %}
-
-                        <div class="card-body">
-                            <form method="POST">
-                                {% csrf_token %}
-
-                                <!-- Campos do User padrão -->
-                                <div class="form-row mb-3">
-                                    <div class="col-md-10 offset-md-1">
-                                        <div class="form-group">
-                                            <label for="id_first_name" class="small mb-1">Primeiro nome</label>
-                                            {{ form.first_name }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-row mb-3">
-                                    <div class="col-md-10 offset-md-1">
-                                        <div class="form-group">
-                                            <label for="id_last_name" class="small mb-1">Sobrenome</label>
-                                            {{ form.last_name }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-row mb-3">
-                                    <div class="col-md-10 offset-md-1">
-                                        <div class="form-group">
-                                            <label for="id_username" class="small mb-1">Username</label>
-                                            {{ form.username }}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                 <!-- Campos adicionais do Profile -->
-                                 <div class="form-row mb-3">
-                                    <div class="col-md-10 offset-md-1">
-                                        <div class="form-group">
-                                            <label for="id_age" class="small mb-1">Idade</label>
-                                            {{ form.age }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-row mb-3">
-                                    <div class="col-md-10 offset-md-1">
-                                        <div class="form-group">
-                                            <label for="id_weight" class="small mb-1">Peso</label>
-                                            {{ form.weight }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-row mb-3">
-                                    <div class="col-md-10 offset-md-1">
-                                        <div class="form-group">
-                                            <label for="id_date_of_birth" class="small mb-1">Data de Nascimento</label>
-                                            {{ form.date_of_birth }}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-row mb-3">
-                                    <div class="col-md-10 offset-md-1">
-                                        <div class="form-group">
-                                            <label for="id_email" class="small mb-1">Email</label>
-                                            {{ form.email }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-row mb-3">
-                                    <div class="col-md-10 offset-md-1">
-                                        <div class="form-group">
-                                            <label for="id_password1" class="small mb-1">Senha</label>
-                                            {{ form.password1 }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-row mb-3">
-                                    <div class="col-md-10 offset-md-1">
-                                        <div class="form-group">
-                                            <label for="id_password2" class="small mb-1">Confirmar senha</label>
-                                            {{ form.password2 }}
-                                        </div>
-                                    </div>
-                                </div>
-
-                               
-
-                                <div class="form-row mb-3 justify-content-center">
-                                    <div class="col-md-10 offset-md-1">
-                                        <div class="form-group mt-0 mb-1">
-                                            <button type="submit" class="btn btn-dark btn-block">Cadastrar</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      {% if form.errors %}
+        <div class="alert alert-danger">
+          <ul class="mb-0">
+            {% for errs in form.errors.values %}{% for err in errs %}<li>{{ err }}</li>{% endfor %}{% endfor %}
+          </ul>
         </div>
-    </div>
+      {% endif %}
+
+      <div class="mb-3">
+        <label>Primeiro Nome</label>
+        {{ form.first_name }}
+      </div>
+      <div class="mb-3">
+        <label>Sobrenome</label>
+        {{ form.last_name }}
+      </div>
+      <div class="mb-3">
+        <label>Username</label>
+        {{ form.username }}
+      </div>
+      <div class="mb-3">
+        <label>Email</label>
+        {{ form.email }}
+      </div>
+
+      <div class="mb-3">
+        <label>Senha</label>
+        {{ form.password1 }}
+      </div>
+      <div class="mb-3">
+        <label>Confirmar Senha</label>
+        {{ form.password2 }}
+      </div>
+
+      <hr class="bg-secondary">
+
+      <div class="mb-3">
+        <label>Idade</label>
+        {{ form.age }}
+      </div>
+      <div class="mb-3">
+        <label>Peso (kg)</label>
+        {{ form.weight }}
+      </div>
+      <div class="mb-3">
+        <label>Altura (cm)</label>
+        {{ form.height }}
+      </div>
+      <div class="mb-3">
+        <label>Anos de Experiência</label>
+        {{ form.experience_years }}
+      </div>
+
+      <div class="d-grid mt-4">
+        <button type="submit" class="btn btn-register">Cadastrar</button>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock content %}
