@@ -1,42 +1,58 @@
 {% extends 'treinos/base.html' %}
 {% block title %}Detalhes{% endblock %}
 {% block header %}Detalhes do Treino{% endblock %}
+
 {% block content %}
-<div class="detail">
-  <div class="header-group">
-    <h2>{{ treino.nome }}</h2>
-    <div class="meta">
+<div class="detail" style="max-width: 800px; margin: 20px auto; background: #1f1f1f; padding: 24px; border-radius: 12px; color: #fff;">
+  <div class="header-group" style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
+    <h2 style="font-size: 2rem; margin: 0;">{{ treino.nome }}</h2>
+    <div class="meta" style="font-size: 0.9rem; color: #aaa;">
       <span>Criado em: {{ treino.criado_em|date:"d/m/Y" }}</span>
       {% if treino.ultima_execucao %}
-      <span>Último treino: {{ treino.ultima_execucao|date:"d/m/Y" }}</span>
+        <span style="margin-left: 12px;">Último treino: {{ treino.ultima_execucao|date:"d/m/Y" }}</span>
       {% endif %}
     </div>
   </div>
 
-  {% for grupo in treino.grupomuscular_set.all %}
-  <div class="grupo-card">
-    <h3>{{ grupo.nome }}</h3>
-    <div class="exercicios-list">
-      {% for exercicio in grupo.exercicio_set.all %}
-      <div class="exercicio-item">
-        <div class="exercicio-info">
-          <span class="nome">{{ exercicio.nome }}</span>
-          <span class="detalhes">{{ exercicio.series }}x{{ exercicio.repeticoes }} | {{ exercicio.descanso }}s</span>
-        </div>
-        <span class="carga">{% firstof exercicio.carga_maxima|floatformat:"0" "-" %}kg</span>
-      </div>
-      {% endfor %}
+  {% if not acesso_proprio %}
+    <div style="background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; display: inline-block;">
+      <span style="font-size: 0.9rem; color: var(--primary);">🔗 Compartilhado por <strong>{{ treino.usuario.username }}</strong></span>
     </div>
-  </div>
+  {% endif %}
+
+  {% for grupo in treino.grupomuscular_set.all %}
+    <div class="grupo-card" style="background: #2a2a2a; border-radius: 10px; padding: 16px; margin-bottom: 16px;">
+      <h3 style="font-size: 1.3rem; color: var(--primary); margin-bottom: 8px;">{{ grupo.nome }}</h3>
+      <div class="exercicios-list" style="display: flex; flex-direction: column; gap: 8px;">
+        {% for exercicio in grupo.exercicio_set.all %}
+          <div class="exercicio-item" style="display: flex; justify-content: space-between; align-items: center; background: #333; border-radius: 8px; padding: 12px;">
+            <div class="exercicio-info" style="display: flex; flex-direction: column;">
+              <span class="nome" style="font-size: 1rem; font-weight: 600; color: #fff;">{{ exercicio.nome }}</span>
+              <span class="detalhes" style="font-size: 0.9rem; color: #ccc;">
+                {{ exercicio.series }}×{{ exercicio.repeticoes }} | {{ exercicio.descanso }}s
+              </span>
+            </div>
+            <span class="carga" style="font-size: 0.9rem; color: #aaa;">
+              {% firstof exercicio.carga_maxima|floatformat:"0" "-" %}kg
+            </span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
   {% endfor %}
 
-  <div class="actions">
-    <a class="btn edit" href="{% url 'treinos:editar_treino' treino.pk %}">✏️ Editar</a>
-    <form action="{% url 'treinos:excluir_treino' treino.pk %}" method="post" style="display: inline;">
-      {% csrf_token %}
-      <button type="submit" class="btn delete">🗑️ Excluir</button>
-    </form>
-    <a class="btn start" href="{% url 'treinos:iniciar_treino' treino.pk %}">▶️ Iniciar</a>
+  <div class="actions" style="margin-top: 24px; display: flex; gap: 12px;">
+    {% if acesso_proprio %}
+      <a class="btn edit" href="{% url 'treinos:editar_treino' treino.pk %}" style="background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 12px; border-radius: 6px;">✏️ Editar</a>
+      <form action="{% url 'treinos:excluir_treino' treino.pk %}" method="post" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn delete" style="background: transparent; border: 1px solid #e74c3c; color: #e74c3c; padding: 8px 12px; border-radius: 6px;">🗑️ Excluir</button>
+      </form>
+      <a class="btn start" href="{% url 'treinos:iniciar_treino' treino.pk %}" style="background: var(--primary); color: #fff; padding: 8px 12px; border-radius: 6px;">▶️ Iniciar</a>
+      <a class="btn share" href="{% url 'treinos:compartilhar_treino' treino.pk %}" style="background: transparent; border: 1px solid #fff; color: #fff; padding: 8px 12px; border-radius: 6px;">🤝 Compartilhar</a>
+    {% else %}
+      <a class="btn start" href="{% url 'treinos:iniciar_treino' treino.pk %}" style="background: var(--primary); color: #fff; padding: 8px 12px; border-radius: 6px;">▶️ Iniciar</a>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

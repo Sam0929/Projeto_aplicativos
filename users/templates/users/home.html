@@ -3,7 +3,7 @@
 {% block title %}Home{% endblock title %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+  <link rel="stylesheet" href="{% static 'css/home.css' %}">
 {% endblock extra_css %}
 
 {% block content %}
@@ -21,14 +21,18 @@
 
   <!-- Cards de Navegação -->
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 card-grid">
-    <!-- Meus Treinos -->
+
+    <!-- Meus Treinos (com cadastrado + compartilhado) -->
     <div class="col">
       <div class="card h-100">
-        <div class="card-body">
+        <div class="card-body text-center">
           <i class="fas fa-dumbbell fa-2x mb-3"></i>
           <h5 class="card-title">Meus Treinos</h5>
-          <p class="card-text">{{ treinos_count }} cadastrados</p>
-          <a href="{% url 'treinos:lista_treinos' %}" class="btn">Ver Treinos</a>
+          <p class="card-text">
+            {{ treinos_count }} cadastrados<br>
+            {{ shared_count }} compartilhados
+          </p>
+          <a href="{% url 'treinos:lista_treinos' %}" class="btn btn-primary">Ver Treinos</a>
         </div>
       </div>
     </div>
@@ -36,11 +40,11 @@
     <!-- Histórico -->
     <div class="col">
       <div class="card h-100">
-        <div class="card-body">
+        <div class="card-body text-center">
           <i class="fas fa-history fa-2x mb-3"></i>
           <h5 class="card-title">Histórico</h5>
           <p class="card-text">{{ exec_count }} execuções</p>
-          <a href="{% url 'treinos:historico_treino' %}" class="btn">Ver Histórico</a>
+          <a href="{% url 'treinos:historico_treino' %}" class="btn btn-primary">Ver Histórico</a>
         </div>
       </div>
     </div>
@@ -48,11 +52,11 @@
     <!-- Novo Treino -->
     <div class="col">
       <div class="card h-100">
-        <div class="card-body">
+        <div class="card-body text-center">
           <i class="fas fa-plus-circle fa-2x mb-3"></i>
           <h5 class="card-title">Novo Treino</h5>
           <p class="card-text">Monte um treino personalizado</p>
-          <a href="{% url 'treinos:novo_treino' %}" class="btn">Criar Agora</a>
+          <a href="{% url 'treinos:novo_treino' %}" class="btn btn-primary">Criar Agora</a>
         </div>
       </div>
     </div>
@@ -60,14 +64,15 @@
     <!-- Perfil -->
     <div class="col">
       <div class="card h-100">
-        <div class="card-body">
+        <div class="card-body text-center">
           <i class="fas fa-user-cog fa-2x mb-3"></i>
           <h5 class="card-title">Meu Perfil</h5>
           <p class="card-text">Atualize seus dados</p>
-          <a href="{% url 'users-profile' %}" class="btn">Editar Perfil</a>
+          <a href="{% url 'users-profile' %}" class="btn btn-primary">Editar Perfil</a>
         </div>
       </div>
     </div>
+
   </div>
 </div>
 {% endblock content %}

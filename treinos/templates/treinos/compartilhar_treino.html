@@ -1,0 +1,15 @@
+<h2>Compartilhar "{{ treino.nome }}"</h2>
+<form method="post">
+  {% csrf_token %}
+  {% for amigo in amigos %}
+    <div>
+      <label>
+        <input type="checkbox" name="amigos" value="{{ amigo.id }}">
+        {{ amigo.username }}
+      </label>
+    </div>
+  {% empty %}
+    <p>Você ainda não tem amigos.</p>
+  {% endfor %}
+  <button type="submit">Compartilhar</button>
+</form>

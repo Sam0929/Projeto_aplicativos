@@ -13,18 +13,23 @@
 
 <div class="card-container">
   {% for treino in treinos %}
-    <a href="{% url 'treinos:detalhe_treino' treino.id %}" class="card">
-      <h2>{{ treino.nome }}</h2>
-      <div class="meta-info">
-        <span>{{ treino.grupomuscular_set.count }} grupos</span>
-        <span>{{ treino.total_exercicios }} exercícios</span>
-      </div>
-      {% if treino.ultima_execucao %}
-        <small>Último: {{ treino.ultima_execucao|date:"d/m/Y" }}</small>
+  <a href="{% url 'treinos:detalhe_treino' treino.id %}" class="card">
+    <h2>
+      {{ treino.nome }}
+      {% if treino.usuario != request.user %}
+        <span title="Treino compartilhado">🤝</span>
       {% endif %}
-    </a>
-  {% empty %}
-    <p class="empty">Nenhum treino cadastrado.</p>
-  {% endfor %}
+    </h2>
+    <div class="meta-info">
+      <span>{{ treino.grupomuscular_set.count }} grupos</span>
+      <span>{{ treino.total_exercicios }} exercícios</span>
+    </div>
+    {% if treino.usuario != request.user %}
+      <small class="shared-by">Compartilhado por {{ treino.usuario.username }}</small>
+    {% elif treino.ultima_execucao %}
+      <small>Último: {{ treino.ultima_execucao|date:"d/m/Y" }}</small>
+    {% endif %}
+  </a>
+{% endfor %}
 </div>
 {% endblock %}

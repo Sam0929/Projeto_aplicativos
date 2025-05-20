@@ -60,3 +60,12 @@ class ExecucaoExercicio(models.Model):
     serie = models.PositiveIntegerField()
     carga_utilizada = models.FloatField()
     duracao = models.DurationField()
+    
+class CompartilhamentoTreino(models.Model):
+    treino = models.ForeignKey('Treino', on_delete=models.CASCADE, related_name='compartilhamentos')
+    de_usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='treinos_compartilhados')
+    para_usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='treinos_recebidos')
+    data_compartilhamento = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('treino', 'para_usuario')

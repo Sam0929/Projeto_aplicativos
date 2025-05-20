@@ -6,21 +6,57 @@ from django.utils.timezone import now
 from datetime import timedelta
 from django.db.models import Max, Prefetch
 from collections import Counter, defaultdict
-from django.shortcuts import render
+from django.contrib.auth import get_user_model
+from django.db.models import Q
+from .models import Treino, CompartilhamentoTreino
+from amizades.models import Amizade
+from itertools import chain
+from django.http import Http404
+
 
 @login_required
 def lista_treinos(request):
-    treinos = Treino.objects.filter(usuario=request.user).prefetch_related('grupomuscular_set')
+    treinos_proprios = Treino.objects.filter(usuario=request.user).prefetch_related('grupomuscular_set')
+    treinos_recebidos = Treino.objects.filter(
+        compartilhamentos__para_usuario=request.user
+    ).prefetch_related('grupomuscular_set').distinct()
+    from itertools import chain
+    treinos = list(chain(treinos_proprios, treinos_recebidos))
     return render(request, 'treinos/lista_treinos.html', {'treinos': treinos})
+
 
 @login_required
 def detalhe_treino(request, pk):
-    treino = get_object_or_404(
-        Treino.objects.prefetch_related('grupomuscular_set__exercicio_set'), 
-        pk=pk, 
-        usuario=request.user
-    )
-    return render(request, 'treinos/detalhe_treino.html', {'treino': treino})
+    """
+    Se o treino for do próprio usuário, carrega normalmente.
+    Se não, verifica se existe CompartilhamentoTreino para este usuário.
+    Caso contrário, lança 404.
+    """
+    # 1. Tenta buscar o treino como sendo do próprio usuário
+    try:
+        treino = Treino.objects.prefetch_related(
+            'grupomuscular_set__exercicio_set'
+        ).get(pk=pk, usuario=request.user)
+        acesso_proprio = True
+    except Treino.DoesNotExist:
+        # 2. Se não encontrou, verifica se foi compartilhado com o usuário
+        treino = get_object_or_404(
+            Treino.objects.prefetch_related('grupomuscular_set__exercicio_set'),
+            pk=pk
+        )
+        acesso_proprio = False
+        # Verifica se existe um compartilhamento para este treino e para este usuário
+        tem_acesso = CompartilhamentoTreino.objects.filter(
+            treino=treino,
+            para_usuario=request.user
+        ).exists()
+        if not tem_acesso:
+            raise Http404("Você não tem permissão para ver este treino.")
+
+    return render(request, 'treinos/detalhe_treino.html', {
+        'treino': treino,
+        'acesso_proprio': acesso_proprio
+    })
 
 
 
@@ -99,6 +135,14 @@ def historico_treino(request):
     return render(request, 'treinos/historico_treino.html', {
         'execucoes': execucoes
     })
+
+def treinos_visiveis_para(usuario):
+    treinos_proprios = Treino.objects.filter(usuario=usuario)
+    treinos_compartilhados = Treino.objects.filter(
+        compartilhamentos__para_usuario=usuario
+    ).exclude(usuario=usuario)  
+
+    return treinos_proprios.union(treinos_compartilhados)
 
 
 
@@ -194,28 +238,51 @@ def excluir_treino(request, pk):
     return render(request, 'users/home.html', {'treino': treino})
 
 
+
 @login_required
 def iniciar_treino(request, treino_id):
-    treino = get_object_or_404(Treino, id=treino_id, usuario=request.user)
+    """
+    Permite iniciar e gravar execução somente para treino próprio ou compartilhado.
+    Ajusta o histórico (last_weight e max_weight) para levar em conta
+    apenas este usuário (request.user), não o dono original do treino.
+    """
+    # 1) Verifica acesso (dono ou compartilhado)
+    try:
+        treino = Treino.objects.prefetch_related('grupomuscular_set__exercicio_set') \
+                               .get(id=treino_id, usuario=request.user)
+        acesso_proprio = True
+    except Treino.DoesNotExist:
+        treino = get_object_or_404(
+            Treino.objects.prefetch_related('grupomuscular_set__exercicio_set'),
+            id=treino_id
+        )
+        acesso_proprio = False
+        if not CompartilhamentoTreino.objects.filter(
+            treino=treino, para_usuario=request.user
+        ).exists():
+            raise Http404("Você não tem permissão para ver este treino.")
 
-    # Prepara os grupos e exercícios (com séries e dados históricos)
+    # 2) Monta os grupos e exercícios, já incluindo histórico filtrado por request.user
     grupos_qs = treino.grupomuscular_set.prefetch_related('exercicio_set')
     execution_groups = []
     for grupo in grupos_qs:
         ex_list = []
         for ex in grupo.exercicio_set.all():
-            # séries
+            # Séries
             ex.series_range = range(1, ex.series + 1)
 
-            # histórico daquele exercício neste treino
+            # Histórico deste exercício, mas **apenas** para este usuário
             hist = ExecucaoExercicio.objects.filter(
                 execucao_treino__treino=treino,
+                execucao_treino__usuario=request.user,  # <— somente executado por quem está rodando agora
                 exercicio=ex
             )
-            # último peso
+
+            # Último peso que ESTE usuário utilizou neste exercício  
             last = hist.order_by('-execucao_treino__data_inicio', '-serie').first()
             ex.last_weight = last.carga_utilizada if last else None
-            # peso máximo
+
+            # Peso máximo que ESTE usuário atingiu neste exercício  
             agg = hist.aggregate(m=Max('carga_utilizada'))
             ex.max_weight = agg['m'] if agg['m'] is not None else None
 
@@ -230,16 +297,19 @@ def iniciar_treino(request, treino_id):
             treino=treino, usuario=request.user
         )
 
-        soma_carga   = 0.0
-        soma_tempo   = timedelta()
+        soma_carga = 0.0
+        soma_tempo = timedelta()
         contador_ser = 0
 
+        # Grava cargas e durações usando o único campo duracao_exercicio_<ex.id>
         for key, val in request.POST.items():
             if not key.startswith("peso_"):
                 continue
+
             _, ex_id, serie = key.split("_")
             carga = float(val) if val else 0.0
-            dur_sec = int(request.POST.get(f"duracao_{ex_id}_{serie}", 0))
+
+            dur_sec = int(request.POST.get(f"duracao_exercicio_{ex_id}", 0))
             duracao = timedelta(seconds=dur_sec)
 
             ExecucaoExercicio.objects.create(
@@ -250,17 +320,57 @@ def iniciar_treino(request, treino_id):
                 duracao=duracao,
             )
 
-            soma_carga   += carga
-            soma_tempo   += duracao
+            soma_carga += carga
+            soma_tempo += duracao
             contador_ser += 1
 
         execucao.carga_total = (soma_carga / contador_ser) if contador_ser else 0.0
-        execucao.duracao     = soma_tempo
+        execucao.duracao = soma_tempo
         execucao.save()
 
         return redirect('treinos:historico_treino')
 
     return render(request, 'treinos/iniciar_treino.html', {
         'treino': treino,
-        'execution_groups': execution_groups
+        'execution_groups': execution_groups,
+        'acesso_proprio': acesso_proprio
+    })
+
+    
+
+
+
+User = get_user_model()
+
+@login_required
+def compartilhar_treino(request, treino_id):
+    treino = get_object_or_404(Treino, id=treino_id)
+
+    if request.method == 'POST':
+        
+        amigos_ids = request.POST.getlist('amigos')
+        for amigo_id in amigos_ids:
+            amigo = get_object_or_404(User, id=amigo_id)
+            
+            CompartilhamentoTreino.objects.get_or_create(
+                treino=treino,
+                de_usuario=request.user,
+                para_usuario=amigo
+            )
+        return redirect('treinos:lista_treinos')
+
+    
+    amizades_qs = Amizade.objects.filter(
+        Q(usuario1=request.user) | Q(usuario2=request.user)
+    )
+    amigos = []
+    for a in amizades_qs:
+        if a.usuario1 == request.user:
+            amigos.append(a.usuario2)
+        else:
+            amigos.append(a.usuario1)
+
+    return render(request, 'treinos/compartilhar_treino.html', {
+        'treino': treino,
+        'amigos': amigos
     })

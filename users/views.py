@@ -5,8 +5,7 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views import View
 from django.contrib.auth.decorators import login_required
-from treinos.models import Treino, ExecucaoTreino
-
+from treinos.models import Treino, ExecucaoTreino,CompartilhamentoTreino
 from .forms import RegisterForm, LoginForm, UpdateUserForm, UpdateProfileForm
 
 
@@ -14,16 +13,23 @@ from .forms import RegisterForm, LoginForm, UpdateUserForm, UpdateProfileForm
 def home(request):
     # Estatísticas rápidas
     treinos_count = Treino.objects.filter(usuario=request.user).count()
-    exec_count   = ExecucaoTreino.objects.filter(usuario=request.user).count()
-    last_exec    = ExecucaoTreino.objects.filter(usuario=request.user) \
-                                         .order_by('-data_inicio') \
-                                         .first()
+    exec_count    = ExecucaoTreino.objects.filter(usuario=request.user).count()
+    last_exec     = ExecucaoTreino.objects.filter(usuario=request.user) \
+                        .order_by('-data_inicio') \
+                        .first()
+
+    # Contagem de treinos compartilhados com o usuário
+    shared_count = Treino.objects.filter(
+        compartilhamentos__para_usuario=request.user
+    ).distinct().count()
 
     return render(request, 'users/home.html', {
-        'treinos_count': treinos_count,
-        'exec_count':    exec_count,
-        'last_exec':     last_exec,
+        'treinos_count':   treinos_count,
+        'exec_count':      exec_count,
+        'last_exec':       last_exec,
+        'shared_count':    shared_count,
     })
+
 
 class RegisterView(View):
     
