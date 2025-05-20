@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'users.apps.UserConfig',
     'social_django',
     'treinos',
+    'amizades',
 ]
 
 MIDDLEWARE = [

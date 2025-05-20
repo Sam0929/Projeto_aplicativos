@@ -1,0 +1,23 @@
+{% extends 'treinos/base.html' %}
+{% block title %}Pedidos de Amizade{% endblock %}
+{% block header %}Pedidos Recebidos{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2>Pedidos de Amizade Recebidos</h2>
+  {% if pedidos %}
+    <ul class="pedidos-lista">
+      {% for pedido in pedidos %}
+      <li>
+        <strong>{{ pedido.de_usuario.username }}</strong>
+        <span>(enviado em {{ pedido.data_criacao|date:"d/m/Y H:i" }})</span>
+        <a href="{% url 'amizades:aceitar_pedido' pedido.id %}" class="btn ghost">Aceitar</a>
+        <a href="{% url 'amizades:recusar_pedido' pedido.id %}" class="btn ghost">Recusar</a>
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>Nenhum pedido pendente.</p>
+  {% endif %}
+</div>
+{% endblock %}

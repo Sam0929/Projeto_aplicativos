@@ -1,0 +1,21 @@
+{% extends 'treinos/base.html' %}
+{% block title %}Meus Amigos{% endblock %}
+{% block header %}Lista de Amigos{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2>Seus Amigos</h2>
+  {% if amigos %}
+    <ul class="amigos-lista">
+      {% for amigo in amigos %}
+      <li>
+        <span>{{ amigo.username }}</span>
+        <!-- Aqui, se quiser, coloque link para profile ou botão de remover amizade -->
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>Você ainda não tem amigos adicionados.</p>
+  {% endif %}
+</div>
+{% endblock %}

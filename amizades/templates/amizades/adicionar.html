@@ -1,0 +1,26 @@
+{% extends 'treinos/base.html' %}
+{% load static %}
+{% block title %}Adicionar Amigos{% endblock %}
+{% block header %}Adicionar Novo Amigo{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2>Enviar Pedido de Amizade</h2>
+  <form method="post">
+    {% csrf_token %}
+    <div class="input-field">
+      <label for="id_username" class="field-label">Username do usuário</label>
+      <input type="text" id="id_username" name="username" placeholder="Digite o username exato" required>
+    </div>
+    <button type="submit" class="btn primary">Enviar Pedido</button>
+  </form>
+
+  {% if messages %}
+    <ul class="messages">
+      {% for msg in messages %}
+        <li class="message {{ msg.tags }}">{{ msg }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+{% endblock %}
