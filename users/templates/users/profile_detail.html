@@ -146,12 +146,13 @@
     {% endif %}
 
     <div class="profile-actions">
-      {% if is_me %}
-        <a href="{% url 'users:users-profile' %}" class="btn btnout">✏️ Editar Perfil</a>
-      {% else %}
-        <a href="#" class="btn btn-primary">💬 Enviar Mensagem</a>
-        <a href="{% url 'users:profile_treinos' usuario.username %}" class="btn btnout">💪 Ver Treinos</a>
-      {% endif %}
+        {% if is_me %}
+          <a href="{% url 'users:users-profile' %}" class="btn btnout">✏️ Editar Perfil</a>
+        {% else %}
+          <a href="#" class="btn btn-primary">💬 Enviar Mensagem</a>
+          <a href="{% url 'users:profile_treinos' usuario.username %}" class="btn btnout">💪 Ver Treinos</a>
+          <a href="{% url 'users:profile_historico' usuario.username %}" class="btn btnout">📊 Histórico</a>
+        {% endif %}
     </div>
   </div>
 {% endblock content %}
