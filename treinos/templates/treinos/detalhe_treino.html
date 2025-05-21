@@ -71,22 +71,33 @@
         style="margin-left: auto; background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 12px; border-radius: 6px; text-decoration: none;">
         🤝 Compartilhar
       </a>
-    {% else %}
-      <form action="{% url 'treinos:adicionar_treino' treino.pk %}" method="post" style="display: flex; gap: 12px;">
-        {% csrf_token %}
-        <button 
-          type="submit" 
-          style="background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 12px; border-radius: 6px; cursor: pointer;">
-          ➕ Adicionar ao meu perfil
-        </button>
-      </form>
-
+      {% else %}
+      {% if compartilhamento %}
+        <!-- Se o treino foi compartilhado, permite iniciar -->
+        <a 
+          href="{% url 'treinos:iniciar_treino' treino.pk %}" 
+          style="background: var(--primary); color: #fff; padding: 8px 12px; border-radius: 6px; text-decoration: none;">
+          ▶️ Iniciar
+        </a>
+      {% else %}
+        <!-- Caso contrário, permite adicionar ao perfil -->
+        <form action="{% url 'treinos:adicionar_treino' treino.pk %}" method="post" style="display: flex; gap: 12px;">
+          {% csrf_token %}
+          <button 
+            type="submit" 
+            style="background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 12px; border-radius: 6px; cursor: pointer;">
+            ➕ Adicionar ao meu perfil
+          </button>
+        </form>
+      {% endif %}
+    
       <a 
         href="{% url 'treinos:compartilhar_treino' treino.pk %}" 
         style="margin-left: auto; background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 12px; border-radius: 6px; text-decoration: none;">
         🤝 Compartilhar
       </a>
     {% endif %}
+    
   </div>
 </div>
 {% endblock %}

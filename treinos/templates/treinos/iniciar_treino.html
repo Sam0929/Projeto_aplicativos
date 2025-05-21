@@ -4,12 +4,11 @@
 {% block title %}Executando: {{ treino.nome }}{% endblock %}
 {% block header %}Executando: {{ treino.nome }}{% endblock %}
 
-
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'treinos/css/iniciar_treino.css' %}">
 {% endblock %}
-{% block content %}
 
+{% block content %}
 <form method="post">
   {% csrf_token %}
   {% for grp in execution_groups %}
@@ -18,21 +17,25 @@
 
       {% for ex in grp.exercicios %}
       <div class="exercicio-item">
-        <!-- cabeçalho com nome + reps -->
+        <!-- cabeçalho com nome -->
         <div class="exercicio-label">
           <h4>{{ ex.nome }}</h4>
-          <span class="reps">{{ ex.repeticoes }} reps</span>
+        </div>
+
+        <!-- reps e descanso recomendado juntos -->
+        <div class="meta-info" style="margin-bottom: 0.5rem; color: #ccc; font-size: 0.9rem;">
+          {{ ex.repeticoes }} reps | ⏱️ Descanso: {{ ex.descanso }} s
         </div>
 
         <!-- histórico alinhado -->
-        <div class="history-info">
+        <div class="history-info" style="margin-bottom: 0.5rem; color: #ddd; font-size: 0.9rem;">
           {% if ex.last_weight %}
-            Último peso: {{ ex.last_weight|floatformat:"0" }} kg
+            Último peso: {{ ex.last_weight|floatformat:"0" }} kg
           {% else %}
             Sem histórico
           {% endif %}
           {% if ex.max_weight %}
-            | Máximo: {{ ex.max_weight|floatformat:"0" }} kg
+            | Máximo: {{ ex.max_weight|floatformat:"0" }} kg
           {% endif %}
         </div>
 
@@ -67,6 +70,7 @@
         </div>
       </div>
       {% endfor %}
+
     </div>
   {% endfor %}
 

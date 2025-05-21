@@ -60,18 +60,17 @@ def detalhe_treino(request, pk):
     })
 
 
-
-
-
 @login_required
 def historico_treino(request):
     # 1) Busque todas as execuções do usuário
-    execucoes = ExecucaoTreino.objects.filter(
-        usuario=request.user
-    ).select_related('treino').order_by('-data_inicio')
+    execucoes = (
+        ExecucaoTreino.objects
+        .filter(usuario=request.user)
+        .select_related('treino')
+        .order_by('-data_inicio')
+    )
 
     # 2) Pré-calcule estatísticas de moda e máxima para cada treino+exercício
-    #    Estrutura: { treino_id: { exercicio_id: {'moda':.., 'maxima':..}, ... }, ... }
     global_stats = {}
     treino_ids = {e.treino_id for e in execucoes}
     for tid in treino_ids:
@@ -90,54 +89,84 @@ def historico_treino(request):
             }
         global_stats[tid] = stats
 
-    # 3) Para cada execução, monte os detalhes agrupados por exercício
+    execucoes_data = []
     for execucao in execucoes:
-        stats = global_stats.get(execucao.treino_id, {})
-        itens_exec = ExecucaoExercicio.objects.filter(
-            execucao_treino=execucao
-        ).select_related('exercicio')
-
-        # agrupa cargas desta execução por exercício
-        usadas_por_ex = defaultdict(list)
-        for item in itens_exec:
-            usadas_por_ex[item.exercicio].append(item.carga_utilizada)
-
-        detalhes = []
+        stats_do_treino = global_stats.get(execucao.treino_id, {})
         perf_indices = []
-        for ex_obj, cargas_usadas in usadas_por_ex.items():
-            hist = stats.get(ex_obj.id, {'moda': 0, 'maxima': 0})
-            carga_moda  = hist['moda']
-            carga_max   = hist['maxima']
+        grupos_data = []
 
-            # índice de desempenho (cada série / máximo histórico)
-            for carga in cargas_usadas:
-                if carga_max > 0:
-                    perf_indices.append(carga / carga_max)
+        # Para cada grupo muscular
+        for grupo in execucao.treino.grupomuscular_set.all().prefetch_related('exercicio_set'):
+            exercicios_data = []
 
-            detalhes.append({
-                'exercicio':        ex_obj.nome,
-                'cargas_usadas':    cargas_usadas,
-                'carga_mais_usada': carga_moda,
-                'carga_maxima':     carga_max,
-            })
+            for ex in grupo.exercicio_set.all():
+                # Obter todas as ExecucaoExercicio desta execução e exercício
+                series_exec = ExecucaoExercicio.objects.filter(
+                    execucao_treino=execucao,
+                    exercicio=ex
+                )
 
-        # calcula desempenho geral (você já tinha isso)
+                # Lista de pesos de cada série (para exibir)
+                series_weights = [ce.carga_utilizada for ce in series_exec.order_by('serie')]
+
+                # Agora, para duração do exercício, pegamos o máximo de `duracao` (pois apenas a 1ª série
+                # tinha o tempo total do exercício; demais tinham zero)
+                duracao_total_ex = series_exec.aggregate(max_dur=Max('duracao'))['max_dur'] or 0
+
+                # Estatísticas históricas
+                hist = stats_do_treino.get(ex.id, {'moda': 0, 'maxima': 0})
+                carga_moda = hist['moda']
+                carga_max = hist['maxima']
+
+                # Índice de desempenho: cada série / carga_max
+                for ce in series_exec:
+                    if carga_max > 0:
+                        perf_indices.append(ce.carga_utilizada / carga_max)
+
+                exercicios_data.append({
+                    'nome_ex': ex.nome,
+                    'series_weights': series_weights,
+                    'duracao_total_ex': duracao_total_ex,
+                    'carga_moda': carga_moda,
+                    'carga_max': carga_max,
+                })
+
+            if exercicios_data:
+                grupos_data.append({
+                    'nome_grupo': grupo.nome,
+                    'exercicios': exercicios_data
+                })
+
+        # 4) Cálculo do desempenho geral
         pct = sum(perf_indices) / len(perf_indices) if perf_indices else 0
         if pct >= 0.9:
-            execucao.desempenho = 'Ótimo'
+            desempenho = 'Ótimo'
         elif pct >= 0.7:
-            execucao.desempenho = 'Bom'
+            desempenho = 'Bom'
         elif pct >= 0.5:
-            execucao.desempenho = 'Regular'
+            desempenho = 'Regular'
         else:
-            execucao.desempenho = 'Ruim'
+            desempenho = 'Ruim'
 
-        execucao.detalhes = detalhes
+        # 5) Duração total em minutos da execução (soma das durações dos exercícios)
+        duracao_total_seg = execucao.duracao.total_seconds()
+        duracao_minutos = int(duracao_total_seg // 60)
+
+        execucoes_data.append({
+            'id': execucao.id,
+            'nome_treino': execucao.treino.nome,
+            'data_inicio': execucao.data_inicio,
+            'duracao_minutos': duracao_minutos,
+            'desempenho': desempenho,
+            'detalhes': grupos_data,
+        })
 
     return render(request, 'treinos/historico_treino.html', {
-        'execucoes': execucoes
+        'execucoes_data': execucoes_data
     })
 
+
+    
 def treinos_visiveis_para(usuario):
     treinos_proprios = Treino.objects.filter(usuario=usuario)
     treinos_compartilhados = Treino.objects.filter(
@@ -240,7 +269,6 @@ def excluir_treino(request, pk):
     return render(request, 'users/home.html', {'treino': treino})
 
 
-
 @login_required
 def iniciar_treino(request, treino_id):
     """
@@ -248,21 +276,29 @@ def iniciar_treino(request, treino_id):
     Ajusta o histórico (last_weight e max_weight) para levar em conta
     apenas este usuário (request.user), não o dono original do treino.
     """
-    # 1) Verifica acesso (dono ou compartilhado)
+
+    # 1) Verifica acesso: tenta buscar como treino próprio; se não, verifica compartilhamento
     try:
-        treino = Treino.objects.prefetch_related('grupomuscular_set__exercicio_set') \
-                               .get(id=treino_id, usuario=request.user)
+        treino = Treino.objects.prefetch_related(
+            'grupomuscular_set__exercicio_set'
+        ).get(id=treino_id, usuario=request.user)
         acesso_proprio = True
+        compartilhamento = None
     except Treino.DoesNotExist:
+        # não é treino próprio, busca sem filtrar por usuário
         treino = get_object_or_404(
             Treino.objects.prefetch_related('grupomuscular_set__exercicio_set'),
             id=treino_id
         )
         acesso_proprio = False
-        if not CompartilhamentoTreino.objects.filter(
-            treino=treino, para_usuario=request.user
-        ).exists():
-            raise Http404("Você não tem permissão para ver este treino.")
+        # checa se esse treino foi compartilhado com request.user
+        compartilhamento = CompartilhamentoTreino.objects.filter(
+            treino=treino,
+            para_usuario=request.user
+        ).first()
+        if not compartilhamento:
+            # nem é do próprio, nem está compartilhado -> 404
+            raise Http404("Você não tem permissão para iniciar este treino.")
 
     # 2) Monta os grupos e exercícios, já incluindo histórico filtrado por request.user
     grupos_qs = treino.grupomuscular_set.prefetch_related('exercicio_set')
@@ -273,10 +309,10 @@ def iniciar_treino(request, treino_id):
             # Séries
             ex.series_range = range(1, ex.series + 1)
 
-            # Histórico deste exercício, mas **apenas** para este usuário
+            # Histórico deste exercício, mas apenas para este usuário:
             hist = ExecucaoExercicio.objects.filter(
                 execucao_treino__treino=treino,
-                execucao_treino__usuario=request.user,  # <— somente executado por quem está rodando agora
+                execucao_treino__usuario=request.user,
                 exercicio=ex
             )
 
@@ -289,39 +325,72 @@ def iniciar_treino(request, treino_id):
             ex.max_weight = agg['m'] if agg['m'] is not None else None
 
             ex_list.append(ex)
+
         execution_groups.append({
             'grupo': grupo,
             'exercicios': ex_list
         })
 
+    # 3) Se for POST, grava a execução: cada série e a duração total apenas na 1ª série de cada exercício
     if request.method == 'POST':
         execucao = ExecucaoTreino.objects.create(
-            treino=treino, usuario=request.user
+            treino=treino,
+            usuario=request.user
         )
+
+        # Primeiro, coleta as durações totais passadas no form: "duracao_exercicio_<ex_id>"
+        duracoes_por_ex = {}
+        for key, val in request.POST.items():
+            if not key.startswith("duracao_exercicio_"):
+                continue
+            parts = key.split("_")
+            # esperamos ["duracao", "exercicio", "<ex_id>"]
+            if len(parts) == 3:
+                try:
+                    ex_id = int(parts[2])
+                    dur_sec = int(val) if val else 0
+                except ValueError:
+                    ex_id = None
+                    dur_sec = 0
+                if ex_id is not None:
+                    duracoes_por_ex[ex_id] = dur_sec
 
         soma_carga = 0.0
         soma_tempo = timedelta()
         contador_ser = 0
 
-        # Grava cargas e durações usando o único campo duracao_exercicio_<ex.id>
+        # Para cada campo "peso_<ex_id>_<serie>"
+        series_contagem = defaultdict(int)  # conta quantas séries já gravamos por ex_id
         for key, val in request.POST.items():
             if not key.startswith("peso_"):
                 continue
+            # key == "peso_<ex_id>_<serie>"
+            try:
+                _, ex_id_str, serie_str = key.split("_")
+                ex_id = int(ex_id_str)
+                serie_num = int(serie_str)
+                carga = float(val) if val else 0.0
+            except (ValueError, TypeError):
+                # caso o form tenha algo inválido, pula
+                continue
 
-            _, ex_id, serie = key.split("_")
-            carga = float(val) if val else 0.0
+            # Se for a primeira série deste exercício, usamos a duração total; senão, zero
+            dur_totais_seg = duracoes_por_ex.get(ex_id, 0)
+            if series_contagem[ex_id] == 0:
+                duracao = timedelta(seconds=dur_totais_seg)
+            else:
+                duracao = timedelta(seconds=0)
 
-            dur_sec = int(request.POST.get(f"duracao_exercicio_{ex_id}", 0))
-            duracao = timedelta(seconds=dur_sec)
-
+            # Cria o registro ExecucaoExercicio
             ExecucaoExercicio.objects.create(
                 execucao_treino=execucao,
-                exercicio_id=int(ex_id),
-                serie=int(serie),
+                exercicio_id=ex_id,
+                serie=serie_num,
                 carga_utilizada=carga,
                 duracao=duracao,
             )
 
+            series_contagem[ex_id] += 1
             soma_carga += carga
             soma_tempo += duracao
             contador_ser += 1
@@ -332,11 +401,14 @@ def iniciar_treino(request, treino_id):
 
         return redirect('treinos:historico_treino')
 
+    # 4) GET: renderiza o template normalmente
     return render(request, 'treinos/iniciar_treino.html', {
         'treino': treino,
         'execution_groups': execution_groups,
-        'acesso_proprio': acesso_proprio
+        'acesso_proprio': acesso_proprio,
+        'compartilhamento': compartilhamento,
     })
+
 
     
 
