@@ -14,6 +14,12 @@ from .models import Treino, CompartilhamentoTreino
 from amizades.models import Amizade
 from itertools import chain
 from django.http import Http404
+import base64
+from io import BytesIO
+import matplotlib.pyplot as plt
+from datetime import timedelta, date
+from django.utils import timezone
+from django.db.models import Count
 
 
 User = get_user_model()
@@ -574,3 +580,172 @@ def adicionar_treino(request, pk):
 
     # Se o método não for POST, redireciona de volta ao detalhe original
     return redirect('treinos:detalhe_treino', pk=treino_original.pk)
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from datetime import timedelta
+from itertools import chain, groupby
+from collections import defaultdict
+import matplotlib.pyplot as plt
+from matplotlib.dates import AutoDateLocator, DateFormatter
+from io import BytesIO
+import base64
+
+from .models import Treino, ExecucaoTreino, ExecucaoExercicio, CompartilhamentoTreino
+
+@login_required
+def analytics(request):
+    user = request.user
+
+    # 1) Todos os treinos (próprios + compartilhados)
+    own    = Treino.objects.filter(usuario=user)
+    shared = Treino.objects.filter(compartilhamentos__para_usuario=user)
+    todos_treinos = list(chain(own, shared))
+
+    # 1.1) Filtro por nome
+    q = request.GET.get('q', '').strip()
+    if q:
+        todos_treinos = [t for t in todos_treinos if q.lower() in t.nome.lower()]
+
+    # 2) Treino selecionado
+    treino_id = request.GET.get('treino_id')
+    treino = None
+    if treino_id:
+        try:
+            t = Treino.objects.get(id=int(treino_id))
+            if t.usuario == user or \
+               CompartilhamentoTreino.objects.filter(treino=t, para_usuario=user).exists():
+                treino = t
+        except:
+            pass
+
+    if not treino:
+        return render(request, 'treinos/analytics.html', {
+            'todos_treinos': todos_treinos,
+            'q': q,
+            'treino': None,
+        })
+
+    # 3) Período
+    period = request.GET.get('period', 'all')
+    hoje = timezone.localtime().date()
+    if period == '1w':
+        data_inicio = hoje - timedelta(weeks=1)
+    elif period == '2w':
+        data_inicio = hoje - timedelta(weeks=2)
+    elif period == '4w':
+        data_inicio = hoje - timedelta(weeks=4)
+    elif period == '3m':
+        data_inicio = hoje - timedelta(days=90)
+    elif period == '6m':
+        data_inicio = hoje - timedelta(days=180)
+    else:
+        data_inicio = None
+
+    # 4) Executions filtered by period
+    qs = ExecucaoTreino.objects.filter(treino=treino, usuario=user).order_by('data_inicio')
+    if data_inicio:
+        qs = qs.filter(data_inicio__date__gte=data_inicio)
+    execucoes = list(qs)
+    if not execucoes:
+        return render(request, 'treinos/analytics.html', {
+            'todos_treinos': todos_treinos,
+            'q': q, 'treino': treino,
+            'period': period, 'sem_execucoes': True,
+        })
+
+    primeira_data = execucoes[0].data_inicio.date()
+    ultima_data   = execucoes[-1].data_inicio.date()
+
+    # Helper para linhas com anotações de data
+    def make_chart(x, y, title, ylabel):
+        fig, ax = plt.subplots()
+        ax.plot(x, y, marker='o', linestyle='-')
+        loc = AutoDateLocator(); fmt = DateFormatter('%d/%m/%Y')
+        ax.xaxis.set_major_locator(loc); ax.xaxis.set_major_formatter(fmt)
+        fig.autofmt_xdate(rotation=45, ha='right')
+        for xi, yi in zip(x, y):
+            ax.annotate(xi.strftime('%d/%m/%Y'),
+                        (xi, yi),
+                        textcoords="offset points",
+                        xytext=(0,8),
+                        ha='center',
+                        color='#ddd',
+                        fontsize=8)
+        ax.set_title(title)
+        ax.set_ylabel(ylabel)
+        ax.grid(True, linestyle='--', alpha=0.6)
+        fig.tight_layout()
+        buf = BytesIO(); fig.savefig(buf, format='png'); buf.seek(0); plt.close(fig)
+        return base64.b64encode(buf.getvalue()).decode()
+
+    # Carga total por execução
+    datas  = [e.data_inicio.date() for e in execucoes]
+    cargas = [e.carga_total for e in execucoes]
+    chart_carga = make_chart(datas, cargas, "Carga Total por Execução", "Carga (kg)")
+
+    # Total de execuções no período: um único ponto
+    total_exec = len(execucoes)
+    # posicionar o ponto em última data do período
+    chart_exec_periodo = make_chart(
+        [ultima_data],
+        [total_exec],
+        "Execuções no Período",
+        "Qtd"
+    )
+
+    # Desempenho médio
+    hist_items = ExecucaoExercicio.objects.filter(execucao_treino__in=execucoes)
+    max_por_ex = defaultdict(int)
+    for item in hist_items:
+        max_por_ex[item.exercicio_id] = max(max_por_ex[item.exercicio_id], item.carga_utilizada)
+
+    datas_perf, vals_perf = [], []
+    for e in execucoes:
+        itens = ExecucaoExercicio.objects.filter(execucao_treino=e)
+        ratios = [
+            i.carga_utilizada / max_por_ex[i.exercicio_id]
+            for i in itens if max_por_ex[i.exercicio_id] > 0
+        ]
+        pct = sum(ratios)/len(ratios) if ratios else 0
+        score = 4 if pct>=0.9 else 3 if pct>=0.7 else 2 if pct>=0.5 else 1
+        datas_perf.append(e.data_inicio.date())
+        vals_perf.append(score)
+    chart_perf = make_chart(datas_perf, vals_perf, "Desempenho Médio (1=Ruim…4=Ótimo)", "")
+
+    # Grupos musculares (idem antes)
+    groups_data = []
+    all_items = ExecucaoExercicio.objects.filter(execucao_treino__in=execucoes)\
+                                        .select_related('exercicio__grupo')
+    sorted_items = sorted(all_items, key=lambda i: i.exercicio.grupo.nome)
+    for grp_name, grp_iter in groupby(sorted_items, key=lambda i: i.exercicio.grupo.nome):
+        grp_list = list(grp_iter); exs = []
+        for ex_id, ex_name in {(i.exercicio.id, i.exercicio.nome) for i in grp_list}:
+            its = [i for i in grp_list if i.exercicio.id==ex_id]
+            first, last = its[0].carga_utilizada, its[-1].carga_utilizada
+            pct = ((last-first)/first*100) if first>0 else 0
+            dates  = [i.execucao_treino.data_inicio.date() for i in its]
+            values = [i.carga_utilizada for i in its]
+            chart  = make_chart(dates, values, f"Progressão: {ex_name}", "Carga") if values else None
+            exs.append({'name': ex_name, 'pct': pct, 'chart': chart})
+        groups_data.append({'group': grp_name, 'exs': exs})
+
+    period_choices = [
+        ('all','Todos'),('1w','1 Semana'),('2w','2 Semanas'),
+        ('4w','4 Semanas'),('3m','3 Meses'),('6m','6 Meses')
+    ]
+
+    return render(request, 'treinos/analytics.html', {
+        'todos_treinos':      todos_treinos,
+        'q':                  q,
+        'treino':             treino,
+        'period':             period,
+        'primeira_data':      primeira_data,
+        'ultima_data':        ultima_data,
+        'chart_carga':        chart_carga,
+        'chart_exec_periodo': chart_exec_periodo,
+        'chart_perf':         chart_perf,
+        'groups_data':        groups_data,
+        'period_choices':     period_choices,
+    })

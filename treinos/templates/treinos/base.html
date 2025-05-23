@@ -15,11 +15,11 @@
     .sidebar ul li.active a {
       font-size: 0.9rem;
     }
-    /* Ajuste de espaçamento vertical, se quiser */
+    /* Ajuste de espaçamento vertical */
     .sidebar ul li a {
       display: flex;
       align-items: center;
-      gap: 0.5rem; /* separa o emoji do texto */
+      gap: 0.5rem;
     }
   </style>
 
@@ -35,27 +35,28 @@
         </a>
       </div>
       <ul>
-        <!-- Cada <li> agora tem emoji e, quando 'active', a fonte diminui -->
         <li class="{% if request.resolver_match.url_name == 'lista_treinos' %}active{% endif %}">
-          <a href="{% url 'treinos:lista_treinos' %}">💪 Meus Treinos</a>
+          <a href="{% url 'treinos:lista_treinos' %}">💪 Meus Treinos</a>
         </li>
         <li class="{% if request.resolver_match.url_name == 'novo_treino' %}active{% endif %}">
-          <a href="{% url 'treinos:novo_treino' %}">➕ Novo Treino</a>
+          <a href="{% url 'treinos:novo_treino' %}">➕ Novo Treino</a>
         </li>
         <li class="{% if request.resolver_match.url_name == 'historico_treino' %}active{% endif %}">
-          <a href="{% url 'treinos:historico_treino' %}">📜 Histórico</a>
+          <a href="{% url 'treinos:historico_treino' %}">📜 Histórico</a>
+        </li>
+        <li class="{% if request.resolver_match.url_name == 'analytics' and request.resolver_match.namespace == 'treinos' %}active{% endif %}">
+          <a href="{% url 'treinos:analytics' %}">📈 Analytics</a>
         </li>
 
         {% if user.is_authenticated %}
-          <!-- Itens de Amizades continuam iguais, sem emoji para não ficar tão carregado -->
           <li class="{% if request.resolver_match.url_name == 'adicionar' and request.resolver_match.namespace == 'amizades' %}active{% endif %}">
-            <a href="{% url 'amizades:adicionar' %}">🔗 Adicionar Amigo</a>
+            <a href="{% url 'amizades:adicionar' %}">🔗 Adicionar Amigo</a>
           </li>
           <li class="{% if request.resolver_match.url_name == 'pedidos_entrada' and request.resolver_match.namespace == 'amizades' %}active{% endif %}">
-            <a href="{% url 'amizades:pedidos_entrada' %}">📥 Pedidos de Amizade</a>
+            <a href="{% url 'amizades:pedidos_entrada' %}">📥 Pedidos de Amizade</a>
           </li>
           <li class="{% if request.resolver_match.url_name == 'lista_amigos' and request.resolver_match.namespace == 'amizades' %}active{% endif %}">
-            <a href="{% url 'amizades:lista_amigos' %}">👥 Meus Amigos</a>
+            <a href="{% url 'amizades:lista_amigos' %}">👥 Meus Amigos</a>
           </li>
         {% endif %}
       </ul>

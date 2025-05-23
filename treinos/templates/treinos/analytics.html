@@ -1,0 +1,156 @@
+{% extends 'treinos/base.html' %}
+{% load static %}
+
+{% block title %}Analytics de Treino{% endblock %}
+{% block header %}📈 Análise do Treino{% endblock %}
+
+{% block extra_css %}
+<style>
+.analytics-container { max-width:920px; margin:40px auto; color:#fff; }
+.search-bar { display:flex; gap:.5rem; margin-bottom:1.5rem; }
+.search-bar input { flex:1; background:#2a2a2a; border:1px solid #444;
+  border-radius:8px; padding:.8rem; color:#fff; }
+.search-bar button { padding:.8rem 1.2rem; background:var(--primary); color:#fff;
+  border:none; border-radius:6px; cursor:pointer; }
+.search-bar button:hover { background:#e55039; }
+
+.back-link { display:inline-block; margin-bottom:2rem; color:var(--primary);
+  text-decoration:none; }
+.back-link:hover { color:#e74c3c; }
+
+.card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:1rem; }
+.card-item { background:#1f1f1f; border-radius:10px; padding:1rem;
+  box-shadow:0 6px 20px rgba(0,0,0,0.3); color:#fff; text-decoration:none; }
+.card-item h4 { color:var(--primary); margin-bottom:.3rem; }
+.card-item p  { font-size:.9rem; color:#ccc; margin:0; }
+
+.period-filter { display:flex; flex-wrap:wrap; gap:.5rem; margin:1rem 0; }
+.period-filter a { background:#2a2a2a; color:#fff; padding:.4rem .8rem;
+  border:1px solid #444; border-radius:6px; text-decoration:none; }
+.period-filter a.active,
+.period-filter a:hover { background:var(--primary); color:#fff;
+  border-color:var(--primary); }
+
+.chart-block { background:#1f1f1f; padding:1rem; margin-bottom:2rem;
+  border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,0.3); text-align:center; }
+.chart-block h3 { color:var(--primary); margin-bottom:1rem; }
+.chart-block img { max-width:100%; height:auto; border:1px solid #333;
+  border-radius:6px; }
+
+.group-section { margin-bottom:2rem; }
+.group-section h4 { color:#00bcd4; margin-bottom:1rem; }
+
+.exercise { background:#2a2a2a; padding:.8rem; border-radius:6px;
+  margin-bottom:.5rem; display:flex; justify-content:space-between;
+  align-items:center; }
+.exercise span { color:#ddd; }
+.exercise button { background:transparent; border:1px solid var(--primary);
+  color:var(--primary); border-radius:4px; padding:.3rem .6rem;
+  cursor:pointer; }
+.exercise button:hover { background:var(--primary); color:#fff; }
+
+/* Removido o display:none daqui para permitir toggle via .d-none */
+.exercise-chart { margin:.5rem 0; }
+.exercise-chart img { max-width:100%; height:auto; border-radius:6px; }
+
+.d-none { display:none !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="analytics-container">
+
+  <form method="get" class="search-bar">
+    <input type="text" name="q" value="{{ q }}" placeholder="Buscar treino…">
+    {% if treino %}
+      <input type="hidden" name="treino_id" value="{{ treino.id }}">
+    {% endif %}
+    {% if period %}
+      <input type="hidden" name="period" value="{{ period }}">
+    {% endif %}
+    <button type="submit">🔍</button>
+  </form>
+
+  {% if not treino %}
+    <div class="card-grid">
+      {% for t in todos_treinos %}
+        {% with total=t.execucaotreino_set.count last=t.execucaotreino_set.last %}
+          <a href="?q={{ q|urlencode }}&treino_id={{ t.id }}&period={{ period|default:'all' }}"
+             class="card-item">
+            <h4>{{ t.nome }}</h4>
+            <p>Total Execuções: {{ total }}</p>
+            {% if last %}
+              <p>Última: {{ last.data_inicio|date:"d/m" }}<small> ({{ last.data_inicio|date:"Y" }})</small></p>
+            {% endif %}
+          </a>
+        {% endwith %}
+      {% empty %}
+        <p class="no-data">Nenhum treino encontrado.</p>
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <a href="{% url 'treinos:analytics' %}" class="back-link">← Voltar ao Overview</a>
+
+    <h2 style="margin:1.5rem 0; color:var(--primary)">📊 {{ treino.nome }}</h2>
+
+    <div class="period-filter">
+      {% for code,label in period_choices %}
+        <a href="?q={{ q|urlencode }}&treino_id={{ treino.id }}&period={{ code }}"
+           class="{% if period == code %}active{% endif %}">
+          {{ label }}
+        </a>
+      {% endfor %}
+    </div>
+
+    <p style="color:#aaa; margin-bottom:1.5rem;">
+      📅 {{ primeira_data|date:"d/m" }} — {{ ultima_data|date:"d/m" }}
+      <small style="color:#555">({{ primeira_data|date:"Y" }}–{{ ultima_data|date:"Y" }})</small>
+    </p>
+
+    <div class="chart-block">
+      <h3>🔹 Carga Total por Execução</h3>
+      <img src="data:image/png;base64,{{ chart_carga }}">
+    </div>
+    <div class="chart-block">
+      <h3>🔹 Execuções por Periodo Selecionado</h3>
+      <img src="data:image/png;base64,{{ chart_exec_periodo }}">
+    </div>
+    <div class="chart-block">
+      <h3>🔹 Desempenho Médio</h3>
+      <img src="data:image/png;base64,{{ chart_perf }}">
+    </div>
+
+    {% for grp in groups_data %}
+      <div class="group-section">
+        <h4>{{ grp.group }}</h4>
+        {% for ex in grp.exs %}
+          <div class="exercise">
+            <span>{{ ex.name }} — Δ {{ ex.pct|floatformat:1 }} %</span>
+            <button type="button" class="toggle-chart">Exibir Gráfico</button>
+          </div>
+          <!-- Inicialmente com d-none, mas sem display:none fixo -->
+          <div class="exercise-chart d-none">
+            <img src="data:image/png;base64,{{ ex.chart }}" alt="Gráfico {{ ex.name }}">
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.toggle-chart').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      const chartDiv = btn.closest('.exercise').nextElementSibling;
+      chartDiv.classList.toggle('d-none');
+      btn.textContent = chartDiv.classList.contains('d-none')
+        ? 'Exibir Gráfico'
+        : 'Ocultar Gráfico';
+    });
+  });
+});
+</script>
+{% endblock %}

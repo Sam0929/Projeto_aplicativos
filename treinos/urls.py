@@ -18,4 +18,5 @@ urlpatterns = [
     path('pedidos_compartilhamento/', views.lista_pedidos_compartilhamento, name='pedidos_compartilhamento'),
     path('aceitar_compartilhamento/<int:comp_id>/', views.aceitar_compartilhamento, name='aceitar_compartilhamento'),
     path('recusar_compartilhamento/<int:comp_id>/', views.recusar_compartilhamento, name='recusar_compartilhamento'),
+    path('analytics/', views.analytics, name='analytics'),
 ]

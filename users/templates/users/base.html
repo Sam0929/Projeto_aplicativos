@@ -95,6 +95,13 @@
                 ➕ Novo Treino
               </a>
             </li>
+            <li class="nav-item">
+              <a 
+                class="nav-link {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}"
+                href="{% url 'treinos:analytics' %}">
+                📊 Analytics
+              </a>
+            </li>
 
             <!-- Dropdown “Amizades” -->
             <li class="nav-item dropdown">
