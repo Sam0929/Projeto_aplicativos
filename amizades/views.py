@@ -189,17 +189,19 @@ def enviar_convite_aluno(request, amigo_id):
 
     # Verificar se são amigos antes de enviar
     existe = Amizade.objects.filter(
-        Q(usuario1=request.user, usuario2=amigo) | Q(usuario1=amigo, usuario2=request.user)
+        Q(usuario1=request.user, usuario2=amigo) |
+        Q(usuario1=amigo,   usuario2=request.user)
     ).exists()
     if not existe:
         messages.error(request, "Você só pode convidar quem é seu amigo.")
         return redirect('amizades:meus_alunos')
 
-    # Criar convite (ou ignorar se já existe)
-    PersonalInvite.objects.get_or_create(
-        personal=request.user,
-        para_usuario=amigo
-    )
+    # Apaga convites antigos (para poder reenviar após remoção)
+    PersonalInvite.objects.filter(personal=request.user, para_usuario=amigo).delete()
+
+    # Cria um novo convite
+    PersonalInvite.objects.create(personal=request.user, para_usuario=amigo)
+    messages.success(request, f"Convite enviado para {amigo.get_full_name() or amigo.username}.")
     return redirect('amizades:meus_alunos')
 
 
@@ -225,8 +227,15 @@ def remover_aluno(request, user_id):
     profile = request.user.profile
     aluno = get_object_or_404(User, pk=user_id)
     profile.students.remove(aluno)
-    messages.success(request, f"{aluno.get_full_name() or aluno.username} foi removido dos seus alunos.")
-    return redirect('amizades:meus_personals')
+    messages.success(
+        request,
+        f"{aluno.get_full_name() or aluno.username} foi removido dos seus alunos."
+    )
+    # redireciona de volta à aba correta
+    if hasattr(request.user, 'profile') and request.user.profile.is_personal:
+        return redirect('amizades:meus_alunos')
+    else:
+        return redirect('amizades:meus_personals')
 
 @login_required
 def meus_personals(request):

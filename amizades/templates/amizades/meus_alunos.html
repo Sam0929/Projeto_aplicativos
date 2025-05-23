@@ -7,7 +7,7 @@
 {% block extra_css %}
 <style>
   .meus-alunos-container {
-    max-width: 800px;
+    max-width: 900px;
     margin: 40px auto;
     color: #fff;
   }
@@ -18,13 +18,13 @@
     font-size: 1.4rem;
   }
 
+  /* Grid de convite */
   .friends-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 1rem;
     margin-bottom: 2rem;
   }
-
   .friend-card {
     background: #1f1f1f;
     border-radius: 10px;
@@ -34,9 +34,8 @@
     align-items: center;
     text-align: center;
     color: #fff;
-    padding-bottom: 1rem;
+    overflow: hidden;
   }
-
   .friend-cover {
     width: 100%;
     height: 100px;
@@ -44,7 +43,6 @@
     background-size: cover;
     background-position: center;
   }
-
   .friend-avatar {
     width: 64px;
     height: 64px;
@@ -54,9 +52,8 @@
     object-fit: cover;
     background: #555;
   }
-
   .friend-card h4 {
-    margin: 0.5rem 0 0.5rem;
+    margin: 0.5rem 0;
     font-size: 1.1rem;
     color: #fff;
     display: flex;
@@ -65,11 +62,62 @@
     gap: 0.3rem;
   }
 
+  /* Listagem de alunos */
+  .meus-alunos-list {
+    margin-top: 2rem;
+  }
+  .aluno-card {
+    display: flex;
+    background: #1f1f1f;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  }
+  .aluno-cover {
+    width: 120px;
+    height: 100%;
+    background-color: #333;
+    background-size: cover;
+    background-position: center;
+  }
+  .aluno-info {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .aluno-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+  .aluno-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #555;
+    border: 2px solid var(--primary);
+  }
+  .aluno-nome {
+    font-size: 1.1rem;
+    color: #fff;
+  }
+  .aluno-actions {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
   .btn-secondary {
     background: transparent;
     border: 1px solid var(--primary);
     color: var(--primary);
-    padding: 0.5rem 0.75rem;
+    padding: 0.4rem 0.75rem;
     border-radius: 6px;
     font-size: 0.9rem;
     transition: background 0.2s, color 0.2s;
@@ -79,11 +127,10 @@
     background: var(--primary);
     color: #fff;
   }
-
   .btn-primary {
     background: var(--primary);
     color: #fff;
-    padding: 0.5rem 0.75rem;
+    padding: 0.4rem 0.75rem;
     border-radius: 6px;
     font-size: 0.9rem;
     transition: background 0.2s;
@@ -115,32 +162,6 @@
     color: #aaa;
     margin-top: 2rem;
   }
-
-  .meus-alunos-list {
-    background: #1f1f1f;
-    border-radius: 10px;
-    padding: 1rem;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-    margin-top: 2rem;
-  }
-  .meus-alunos-list h3 {
-    margin-bottom: 1rem;
-    color: var(--primary);
-  }
-  .meus-alunos-list ul {
-    list-style: none;
-    padding: 0;
-  }
-  .meus-alunos-list li {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #333;
-  }
-  .meus-alunos-list li:last-child {
-    border-bottom: none;
-  }
 </style>
 {% endblock extra_css %}
 
@@ -149,6 +170,8 @@
     {% if not request.user.profile.is_personal %}
       <p>Somente Personal Trainers têm acesso a esta página.</p>
     {% else %}
+
+      {# seção de convite #}
       <div class="section-title">Convidar Amigos para serem seus Alunos</div>
       {% if amigos %}
         <div class="friends-grid">
@@ -156,36 +179,27 @@
             <div class="friend-card">
               <div class="friend-cover"
                    {% if amigo.profile.cover_photo %}
-                     style="background-image: url('{{ amigo.profile.cover_photo.url }}')"
+                     style="background-image:url('{{ amigo.profile.cover_photo.url }}')"
                    {% endif %}>
               </div>
-              <img src="{{ amigo.profile.avatar.url }}" alt="{{ amigo.username }}" class="friend-avatar">
+              <img src="{{ amigo.profile.avatar.url }}" class="friend-avatar" alt="Avatar">
 
               <h4>
                 {{ amigo.get_full_name|default:amigo.username }}
-                {% if amigo.profile.is_personal %}
-                  <span title="É Personal Trainer">🏋️</span>
-                {% endif %}
+                {% if amigo.profile.is_personal %}<span title="É Personal">🏋️</span>{% endif %}
               </h4>
 
-              {# Se já é aluno, exibe “Aluno” e botão de Analytics #}
               {% if amigo in alunos %}
                 <span class="badge-aluno">Aluno</span>
-                <div style="margin-top: 0.5rem;">
-                </div>
               {% else %}
-                {# Se convite pendente, exibe badge “Pedido Enviado” #}
                 {% if amigo.id in pendentes_ids %}
                   <span class="badge-pendente">Pedido Enviado</span>
                 {% else %}
-                  <div style="margin-top: 0.5rem;">
-                    <a href="{% url 'amizades:enviar_convite_aluno' amigo.id %}" class="btn-primary">
-                      Convidar
-                    </a>
-                  </div>
+                  <a href="{% url 'amizades:enviar_convite_aluno' amigo.id %}" class="btn-primary">
+                    Convidar
+                  </a>
                 {% endif %}
               {% endif %}
-
             </div>
           {% endfor %}
         </div>
@@ -193,38 +207,56 @@
         <p class="message-empty">Você não possui amigos para convidar.</p>
       {% endif %}
 
+
+      {# listagem de alunos #}
       <div class="meus-alunos-list">
-        <h3>Meus Alunos</h3>
+        <h3 class="section-title">Meus Alunos</h3>
+
         {% if alunos %}
-          <ul>
-            {% for aluno in alunos %}
-              <li>
-                <span>{{ aluno.get_full_name|default:aluno.username }}</span>
-                <div>
+          {% for aluno in alunos %}
+            <div class="aluno-card">
+              <div class="aluno-cover"
+                   {% if aluno.profile.cover_photo %}
+                     style="background-image:url('{{ aluno.profile.cover_photo.url }}')"
+                   {% endif %}>
+              </div>
+              <div class="aluno-info">
+                <div class="aluno-header">
+                  <img src="{{ aluno.profile.avatar.url }}" class="aluno-avatar" alt="Avatar">
+                  <span class="aluno-nome">
+                    {{ aluno.get_full_name|default:aluno.username }}
+                  </span>
+                  {% if aluno.profile.is_personal %}
+                    <span class="badge-aluno">🏋️ Personal</span>
+                  {% endif %}
+                </div>
+                <div class="aluno-actions">
                   <a href="{% url 'treinos:analytics' %}?usuario_id={{ aluno.id }}" class="btn-secondary">
                     Ver Analytics
                   </a>
-                  <a href="{% url 'amizades:remover_aluno' aluno.id %}" class="btn-secondary" style="margin-left: 0.5rem;">
+                  <a href="{% url 'users:profile_treinos' aluno.username %}" class="btn-primary">
+                    Ver Treinos
+                  </a>
+                  <a href="{% url 'users:profile_historico' aluno.username %}" class="btn-secondary">
+                    Ver Histórico
+                  </a>
+                  <a href="{% url 'amizades:remover_aluno' aluno.id %}" class="btn-secondary">
                     Remover
                   </a>
                 </div>
-              </li>
-            {% endfor %}
-          </ul>
+              </div>
+            </div>
+          {% endfor %}
         {% else %}
           <p class="message-empty">Você ainda não tem alunos.</p>
         {% endif %}
       </div>
 
-      <hr style="margin: 2rem 0; border-color: #333;">
+      <hr style="border-color:#333; margin:2rem 0;">
 
       <div class="section-title">Convites Pendentes</div>
-      {% comment %}
-         Aqui, personal não recebe convites ─ apenas envia. 
-         Se você deseja mostrar convites que o personal recebeu (de outros),
-         basta adicionar ao contexto convites_recebidos e iterar como for necessário.
-      {% endcomment %}
       <p class="message-empty">Nenhum convite pendente recebido.</p>
+
     {% endif %}
   </div>
-{% endblock %}
+{% endblock content %}
