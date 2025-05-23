@@ -5,174 +5,418 @@
 
 {% block extra_css %}
 <style>
+  /* Garante que o container use largura responsiva do Bootstrap */
   .edit-cover-container {
-    position: relative; width:100%; height:180px; margin-bottom:2rem;
-    border-radius:8px; overflow:hidden;
+    position: relative;
+    width: 100%;
+    height: 180px;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    overflow: hidden;
   }
   .edit-cover {
-    width:100%; height:100%; background-color:#444;
-    background-size:cover; background-position:center;
+    width: 100%;
+    height: 100%;
+    background-color: #444;
+    background-size: cover;
+    background-position: center;
   }
   .cover-overlay {
-    position:absolute; inset:0;
-    background:rgba(0,0,0,0.4);
-    display:flex; align-items:center; justify-content:center;
-    opacity:0; transition:opacity .2s; cursor:pointer;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    cursor: pointer;
   }
-  .edit-cover-container:hover .cover-overlay { opacity:1; }
-  .cover-overlay i { font-size:2rem; color:#fff; }
+  .edit-cover-container:hover .cover-overlay {
+    opacity: 1;
+  }
+  .cover-overlay i {
+    font-size: 2rem;
+    color: #fff;
+  }
 
   .edit-container {
-    max-width:700px; margin:-80px auto 40px;
-    background:#1f1f1f !important;
-    border-radius:12px; padding:2rem;
-    box-shadow:0 6px 20px rgba(0,0,0,0.3); position:relative;
+    background: #1f1f1f !important;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    position: relative;
+    margin-bottom: 3rem;
   }
 
   .avatar-container {
-    position:absolute; top:-50px; left:50%;
-    transform:translateX(-50%);
-    width:100px; height:100px; border-radius:50%;
-    overflow:hidden; border:4px solid rgba(0,0,0,0.6);
-    cursor:pointer;
+    position: absolute;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid rgba(0,0,0,0.6);
+    background: #555;
+    cursor: pointer;
   }
-  .edit-avatar { width:100%; height:100%; object-fit:cover; background:#555; }
+  .edit-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #555;
+  }
   .avatar-overlay {
-    position:absolute; inset:0;
-    background:rgba(0,0,0,0.5);
-    display:flex; align-items:center; justify-content:center;
-    opacity:0; transition:opacity .2s;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
   }
-  .avatar-container:hover .avatar-overlay { opacity:1; }
-  .avatar-overlay i { font-size:1.5rem; color:#fff; }
+  .avatar-container:hover .avatar-overlay {
+    opacity: 1;
+  }
+  .avatar-overlay i {
+    font-size: 1.5rem;
+    color: #fff;
+  }
 
-  .edit-header { text-align:center; margin-top:60px; margin-bottom:1.5rem; color:#fff; }
-  .edit-header h2 { color:var(--primary); font-size:1.8rem; }
+  .edit-header {
+    text-align: center;
+    margin-top: 60px;
+    margin-bottom: 1.5rem;
+    color: #fff;
+  }
+  .edit-header h2 {
+    color: var(--primary);
+    font-size: 1.8rem;
+  }
 
-  .form-section { margin-bottom:1.5rem; }
+  .form-section {
+    margin-bottom: 1.5rem;
+  }
   .form-section h4 {
-    color:var(--primary); margin-bottom:.75rem;
-    border-bottom:1px solid rgba(255,255,255,0.3);
-    padding-bottom:.25rem;
+    color: var(--primary);
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+    padding-bottom: 0.25rem;
   }
-  .row.g-3 > [class*="col-"] label {
-    color:#ccc; font-weight:500;
-  }
-  .row.g-3 > [class*="col-"] input,
-  .row.g-3 > [class*="col-"] select {
-    background:#2a2a2a; border:1px solid #444; color:#eee;
+  label {
+    color: #ccc;
+    font-weight: 500;
   }
 
-  .btn-save { background:var(--primary); color:#fff; }
+  /* Inputs e selects estilo escuro */
+  input.form-control,
+  select.form-control,
+  textarea.form-control {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    color: #eee;
+  }
+
+  .btn-save {
+    background: var(--primary);
+    color: #fff;
+  }
   .btn-reset {
-    background:transparent; border:1px solid var(--primary);
-    color:var(--primary);
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+  }
+
+  /* Bloco Profissional agrupado */
+  #profissional-block {
+    display: none;
+    background: rgba(0,0,0,0.4);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+
+  @media (max-width: 576px) {
+    /* Ajustes para telas bem pequenas */
+    .avatar-container {
+      top: -40px;
+      width: 80px;
+      height: 80px;
+    }
+    .edit-header h2 {
+      font-size: 1.5rem;
+    }
   }
 </style>
 {% endblock extra_css %}
 
 {% block content %}
+<div class="container">
+  <!-- Cover / Banner -->
   <div class="edit-cover-container">
-    <div class="edit-cover" id="coverPreview"
-         {% if user.profile.cover_photo %}
-           style="background-image:url('{{ user.profile.cover_photo.url }}')"
-         {% endif %}></div>
+    <div
+      id="coverPreview"
+      class="edit-cover"
+      {% if user.profile.cover_photo %}
+        style="background-image: url('{{ user.profile.cover_photo.url }}');"
+      {% endif %}
+    ></div>
     <div class="cover-overlay" onclick="document.getElementById('id_cover_photo').click()">
       <i class="fas fa-pencil-alt"></i>
     </div>
   </div>
 
-  <div class="edit-container">
-    <div class="avatar-container" onclick="document.getElementById('id_avatar').click()">
-      <img src="{{ user.profile.avatar.url }}" class="edit-avatar" alt="Avatar" id="avatarPreview">
-      <div class="avatar-overlay"><i class="fas fa-pencil-alt"></i></div>
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+      <div class="edit-container">
+        <!-- Avatar -->
+        <div class="avatar-container" onclick="document.getElementById('id_avatar').click()">
+          <img
+            id="avatarPreview"
+            src="{{ user.profile.avatar.url }}"
+            class="edit-avatar"
+            alt="Avatar"
+          >
+          <div class="avatar-overlay">
+            <i class="fas fa-pencil-alt"></i>
+          </div>
+        </div>
+
+        <div class="edit-header">
+          <h2>Editar Perfil</h2>
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <!-- 1) Seção Básico -->
+          <div class="form-section">
+            <h4>Básico</h4>
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label for="{{ user_form.username.id_for_label }}">Username</label>
+                {{ user_form.username }}
+              </div>
+              <div class="col-sm-6">
+                <label for="{{ user_form.email.id_for_label }}">Email</label>
+                {{ user_form.email }}
+              </div>
+              <div class="col-sm-4">
+                <label for="{{ profile_form.age.id_for_label }}">Idade</label>
+                {{ profile_form.age }}
+              </div>
+              <div class="col-sm-4">
+                <label for="{{ profile_form.weight.id_for_label }}">Peso (kg)</label>
+                {{ profile_form.weight }}
+              </div>
+              <div class="col-sm-4">
+                <label for="{{ profile_form.height.id_for_label }}">Altura (cm)</label>
+                {{ profile_form.height }}
+              </div>
+            </div>
+          </div>
+
+          <!-- 2) Seção Academia -->
+          <div class="form-section">
+            <h4>Academia</h4>
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label for="{{ profile_form.experience_years.id_for_label }}">Anos de Experiência</label>
+                {{ profile_form.experience_years }}
+              </div>
+            </div>
+          </div>
+
+          <!-- 3) Seção Privacidade -->
+          <div class="form-section">
+            <h4>Privacidade</h4>
+            <div class="row g-3">
+              <div class="col-sm-4">
+                <div class="form-check">
+                  {{ profile_form.show_weight }}
+                  <label class="form-check-label" for="{{ profile_form.show_weight.id_for_label }}">
+                    Mostrar Peso?
+                  </label>
+                </div>
+              </div>
+              <div class="col-sm-4">
+                <div class="form-check">
+                  {{ profile_form.show_height }}
+                  <label class="form-check-label" for="{{ profile_form.show_height.id_for_label }}">
+                    Mostrar Altura?
+                  </label>
+                </div>
+              </div>
+              <div class="col-sm-4">
+                <div class="form-check">
+                  {{ profile_form.show_experience }}
+                  <label class="form-check-label" for="{{ profile_form.show_experience.id_for_label }}">
+                    Mostrar Experiência?
+                  </label>
+                </div>
+              </div>
+              <div class="col-sm-4">
+                <div class="form-check">
+                  {{ profile_form.hide_email }}
+                  <label class="form-check-label" for="{{ profile_form.hide_email.id_for_label }}">
+                    Ocultar meu e-mail?
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4) Seção Rede Social -->
+          <div class="form-section">
+            <h4>Rede Social</h4>
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label for="{{ profile_form.location.id_for_label }}">Localização</label>
+                {{ profile_form.location }}
+              </div>
+              <div class="col-sm-3">
+                <label for="{{ profile_form.gender.id_for_label }}">Gênero</label>
+                {{ profile_form.gender }}
+              </div>
+              <div class="col-sm-3">
+                <label for="{{ profile_form.relationship_status.id_for_label }}">Status</label>
+                {{ profile_form.relationship_status }}
+              </div>
+            </div>
+          </div>
+
+          <!-- 5) Seção Interesses e Bio -->
+          <div class="form-section">
+            <h4>Interesses e Bio</h4>
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="{{ profile_form.interests.id_for_label }}">Interesses</label>
+                {{ profile_form.interests }}
+              </div>
+              <div class="col-12">
+                <label for="{{ profile_form.bio.id_for_label }}">Bio</label>
+                {{ profile_form.bio }}
+              </div>
+            </div>
+          </div>
+
+          <!-- 6) Seção Personal Trainer -->
+          <div class="form-section">
+            <h4>Personal Trainer</h4>
+            <div class="row g-3">
+              <div class="col-12">
+                <div class="form-check">
+                  {{ profile_form.is_personal }}
+                  <label class="form-check-label" for="{{ profile_form.is_personal.id_for_label }}">
+                    Marcar como Personal Trainer
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7) Campos profissionais (aparecem somente se is_personal estiver marcado) -->
+          <div id="profissional-block">
+            <div class="form-section">
+              <h4>Formação e Certificações</h4>
+              <div class="row g-3">
+                <div class="col-12">
+                  <label for="{{ profile_form.college.id_for_label }}">Faculdade</label>
+                  {{ profile_form.college }}
+                </div>
+                <div class="col-12">
+                  <label for="{{ profile_form.certifications.id_for_label }}">Certificações e Cursos</label>
+                  {{ profile_form.certifications }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Inputs escondidos para upload -->
+          <input
+            type="file"
+            id="id_avatar"
+            name="avatar"
+            hidden
+            accept="image/*"
+            onchange="previewImage(this, 'avatarPreview')"
+          >
+          <input
+            type="file"
+            id="id_cover_photo"
+            name="cover_photo"
+            hidden
+            accept="image/*"
+            onchange="previewCover(this)"
+          >
+
+          <!-- Botões de salvar / resetar -->
+          <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-save me-2">Salvar</button>
+            <button type="reset" class="btn btn-reset" onclick="resetPreview()">Resetar</button>
+          </div>
+        </form>
+      </div>
     </div>
-
-    <div class="edit-header"><h2>Editar Perfil</h2></div>
-
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-
-      <div class="row g-3 form-section">
-        <h4>Básico</h4>
-        <div class="col-md-6"><label>Username</label>{{ user_form.username }}</div>
-        <div class="col-md-6"><label>Email</label>{{ user_form.email }}</div>
-        <div class="col-md-4"><label>Idade</label>{{ profile_form.age }}</div>
-        <div class="col-md-4"><label>Peso (kg)</label>{{ profile_form.weight }}</div>
-        <div class="col-md-4"><label>Altura (cm)</label>{{ profile_form.height }}</div>
-      </div>
-
-      <div class="row g-3 form-section">
-        <h4>Academia</h4>
-        <div class="col-md-6"><label>Anos de Experiência</label>{{ profile_form.experience_years }}</div>
-      </div>
-
-      <div class="row g-3 form-section">
-        <h4>Privacidade</h4>
-        <div class="col-md-4"><label>Mostrar Peso?</label>{{ profile_form.show_weight }}</div>
-        <div class="col-md-4"><label>Mostrar Altura?</label>{{ profile_form.show_height }}</div>
-        <div class="col-md-4"><label>Mostrar Experiência?</label>{{ profile_form.show_experience }}</div>
-      </div>
-
-      <div class="row g-3 form-section">
-        <h4>Rede Social</h4>
-        <div class="col-md-6"><label>Localização</label>{{ profile_form.location }}</div>
-        <div class="col-md-3"><label>Gênero</label>{{ profile_form.gender }}</div>
-        <div class="col-md-3"><label>Status</label>{{ profile_form.relationship_status }}</div>
-      </div>
-
-      <div class="row g-3 form-section">
-        <h4>Interesses e Bio</h4>
-        <div class="col-md-12"><label>Interesses</label>{{ profile_form.interests }}</div>
-        <div class="col-md-12"><label>Bio</label>{{ profile_form.bio }}</div>
-      </div>
-
-      <!-- Inputs escondidos com accept restrito -->
-      <input type="file" id="id_avatar" name="avatar" hidden accept="image/*" onchange="previewImage(this, 'avatarPreview')">
-      <input type="file" id="id_cover_photo" name="cover_photo" hidden accept="image/*" onchange="previewCover(this)">
-
-      <div class="d-flex justify-content-end">
-        <button type="submit" class="btn btn-save me-2">Salvar</button>
-        <button type="reset" class="btn btn-reset" onclick="resetPreview()">Resetar</button>
-      </div>
-    </form>
   </div>
+</div>
 
-  <script>
-    const originalAvatar = document.getElementById('avatarPreview').src;
-    const originalCover = document.getElementById('coverPreview').style.backgroundImage;
+<!-- Scripts JS -->
+<script>
+  // Guarda os valores originais para resetar previews
+  const originalAvatar = document.getElementById('avatarPreview').src;
+  const originalCover = document.getElementById('coverPreview').style.backgroundImage;
 
-    function previewImage(input, targetId) {
-      const file = input.files[0];
-      if (file && file.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          document.getElementById(targetId).src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      } else {
-        input.value = "";
-      }
+  function previewImage(input, targetId) {
+    const file = input.files[0];
+    if (file && file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById(targetId).src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      input.value = "";
     }
+  }
 
-    function previewCover(input) {
-      const file = input.files[0];
-      if (file && file.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          document.getElementById("coverPreview").style.backgroundImage = `url('${e.target.result}')`;
-        };
-        reader.readAsDataURL(file);
-      } else {
-        input.value = "";
-      }
+  function previewCover(input) {
+    const file = input.files[0];
+    if (file && file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById("coverPreview").style.backgroundImage = `url('${e.target.result}')`;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      input.value = "";
     }
+  }
 
-    function resetPreview() {
-      document.getElementById('avatarPreview').src = originalAvatar;
-      document.getElementById('coverPreview').style.backgroundImage = originalCover;
-      document.getElementById('id_avatar').value = '';
-      document.getElementById('id_cover_photo').value = '';
-    }
-  </script>
+  function resetPreview() {
+    document.getElementById('avatarPreview').src = originalAvatar;
+    document.getElementById('coverPreview').style.backgroundImage = originalCover;
+    document.getElementById('id_avatar').value = '';
+    document.getElementById('id_cover_photo').value = '';
+    // Atualiza bloco profissional conforme checkbox
+    toggleProfissional();
+  }
+
+  function toggleProfissional() {
+    const chk = document.getElementById('id_is_personal');
+    const bloco = document.getElementById('profissional-block');
+    bloco.style.display = chk.checked ? 'block' : 'none';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Ao carregar, decide se mostra bloco profissional
+    toggleProfissional();
+    // Acrescenta listener para mostrar/esconder
+    document.getElementById('id_is_personal')
+      .addEventListener('change', toggleProfissional);
+  });
+</script>
 {% endblock content %}

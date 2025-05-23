@@ -1,0 +1,107 @@
+{% extends 'treinos/base.html' %}
+{% load static %}
+
+{% block title %}Pedidos de Compartilhamento{% endblock %}
+{% block header %}Pedidos Pendentes de Compartilhamento{% endblock %}
+
+{% block extra_css %}
+<style>
+  .pedidos-container {
+    max-width: 700px;
+    margin: 40px auto;
+    color: #fff;
+    font-family: sans-serif;
+  }
+  .pedidos-container h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--primary);
+  }
+  .pedido-card {
+    background: #1f1f1f;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .pedido-info {
+    display: flex;
+    flex-direction: column;
+  }
+  .pedido-info span {
+    color: #aaa;
+    font-size: 0.9rem;
+  }
+  .pedido-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .btn.aceitar, .btn.recusar {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s, color 0.2s;
+  }
+  .btn.aceitar {
+    background: var(--primary);
+    color: #fff;
+  }
+  .btn.aceitar:hover { background: #27ae60; }
+  .btn.recusar {
+    background: transparent;
+    border: 1px solid #e74c3c;
+    color: #e74c3c;
+  }
+  .btn.recusar:hover {
+    background: #e74c3c;
+    color: #fff;
+  }
+  .message-empty {
+    text-align: center;
+    color: #aaa;
+    margin-top: 2rem;
+  }
+  .back-link {
+    display: inline-block;
+    margin-top: 1.5rem;
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+  }
+  .back-link:hover { color: #e74c3c; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pedidos-container">
+  <h2>Pedidos de Compartilhamento Recebidos</h2>
+
+  {% if pedidos %}
+    {% for pedido in pedidos %}
+      <div class="pedido-card">
+        <div class="pedido-info">
+          <strong>{{ pedido.de_usuario.username }}</strong>
+          <span>Criado em {{ pedido.criado_em|date:"d/m/Y H:i" }}</span>
+          <span>Treino: {{ pedido.treino.nome }}</span>
+        </div>
+        <div class="pedido-actions">
+          <a href="{% url 'treinos:aceitar_compartilhamento' pedido.id %}" class="btn aceitar">Aceitar</a>
+          <a href="{% url 'treinos:recusar_compartilhamento' pedido.id %}" class="btn recusar">Recusar</a>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="message-empty">Não há pedidos de compartilhamento pendentes.</p>
+  {% endif %}
+
+  <div style="text-align:center;">
+    <a href="{% url 'treinos:lista_treinos' %}" class="back-link">← Voltar à lista de treinos</a>
+  </div>
+</div>
+{% endblock %}

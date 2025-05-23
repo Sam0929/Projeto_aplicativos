@@ -19,7 +19,7 @@
     max-width: 650px;
     margin: -100px auto 40px;
     padding: 2rem;
-    background: rgba(0,0,0,0.6); /* tom mais suave */
+    background: rgba(0,0,0,0.6);
     border-radius: 12px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.3);
     color: #fff;
@@ -39,7 +39,9 @@
     text-align: center;
     margin-top: 60px; margin-bottom: 1.5rem;
   }
-  .profile-header h2 { color: var(--primary); font-size: 1.8rem; margin: .5rem 0 .2rem; }
+  .profile-header h2 {
+    color: var(--primary); font-size: 1.8rem; margin: .5rem 0 .2rem;
+  }
   .profile-header p { color: #ddd; font-size: .95rem; margin: 0; }
 
   .profile-info {
@@ -55,7 +57,6 @@
   .info-item .emoji { font-size: 1.2rem; line-height:1; }
   .info-item .label { font-weight: bold; color:#fff; }
 
-  /* Agrupar Academia + Dados Pessoais */
   .group-header {
     grid-column: span 2;
     margin-top: 1rem; margin-bottom: .5rem;
@@ -71,14 +72,26 @@
   .profile-bio-container h3 { color: var(--primary); margin:0 0 .5rem; }
   .profile-bio { color: #eee; line-height:1.4; }
 
-  .profile-actions { text-align:center; }
+  .profile-actions { text-align:center; margin-top:1rem; }
   .profile-actions .btn {
     margin:.3rem; padding:.6rem 1.2rem; font-size:.95rem; border-radius:6px;
-    transition: background .2s, color .2s;
+    transition: background .2s, color .2s; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 0.3rem;
   }
   .btn-primary { background: var(--primary); color:#fff; }
-  .btnout { background:transparent; border:1px solid var(--primary); color:var(--primary);}
+  .btnout { background:transparent; border:1px solid var(--primary); color:var(--primary); }
   .btnout:hover { background: var(--primary); color:#fff; }
+
+  .badge-personal {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
 </style>
 {% endblock extra_css %}
 
@@ -86,49 +99,100 @@
   <div class="cover"
        {% if profile.cover_photo %}
          style="background-image:url('{{ profile.cover_photo.url }}')"
-       {% endif %}></div>
+       {% endif %}>
+  </div>
 
   <div class="profile-container">
     <img src="{{ profile.avatar.url }}" class="profile-avatar" alt="Avatar">
 
     <div class="profile-header">
-      <h2>{{ usuario.get_full_name|default:usuario.username }}</h2>
+      <h2>
+        {{ usuario.get_full_name|default:usuario.username }}
+        {% if profile.is_personal %}
+          <span class="badge-personal">🏋️ Personal Trainer</span>
+        {% endif %}
+      </h2>
       <p>@{{ usuario.username }}</p>
     </div>
 
     <div class="profile-info">
       <div class="group-header">Dados Pessoais</div>
-      {% if usuario.email %}
-        <div class="info-item"><span class="emoji">📧</span><span class="label">Email:</span>{{ usuario.email }}</div>
+
+      {# EXIBIR E-MAIL somente se (não hide_email) ou se for o próprio usuário #}
+      {% if not profile.hide_email or is_me %}
+        {% if usuario.email %}
+          <div class="info-item">
+            <span class="emoji">📧</span>
+            <span class="label">Email:</span>
+            {{ usuario.email }}
+          </div>
+        {% endif %}
+      {% else %}
+        <div class="info-item">
+          <span class="emoji">🔒</span>
+          <span class="label">Email:</span> Oculto
+        </div>
       {% endif %}
+
       {% if profile.show_age and profile.age %}
-        <div class="info-item"><span class="emoji">🎂</span><span class="label">Idade:</span>{{ profile.age }} anos</div>
+        <div class="info-item">
+          <span class="emoji">🎂</span>
+          <span class="label">Idade:</span>
+          {{ profile.age }} anos
+        </div>
       {% endif %}
 
       <div class="group-header">Academia</div>
       {% if profile.show_weight and profile.weight %}
-        <div class="info-item"><span class="emoji">⚖️</span><span class="label">Peso:</span>{{ profile.weight }} kg</div>
+        <div class="info-item">
+          <span class="emoji">⚖️</span>
+          <span class="label">Peso:</span>
+          {{ profile.weight }} kg
+        </div>
       {% endif %}
       {% if profile.show_height and profile.height %}
-        <div class="info-item"><span class="emoji">📏</span><span class="label">Altura:</span>{{ profile.height }} cm</div>
+        <div class="info-item">
+          <span class="emoji">📏</span>
+          <span class="label">Altura:</span>
+          {{ profile.height }} cm
+        </div>
       {% endif %}
       {% if profile.show_experience and profile.experience_years %}
-        <div class="info-item"><span class="emoji">🏅</span><span class="label">Experiência:</span>{{ profile.experience_years }} anos</div>
+        <div class="info-item">
+          <span class="emoji">🏅</span>
+          <span class="label">Experiência:</span>
+          {{ profile.experience_years }} anos
+        </div>
       {% endif %}
 
       <div class="group-header">Outros</div>
       {% if profile.location %}
-        <div class="info-item"><span class="emoji">📍</span><span class="label">Localização:</span>{{ profile.location }}</div>
+        <div class="info-item">
+          <span class="emoji">📍</span>
+          <span class="label">Localização:</span>
+          {{ profile.location }}
+        </div>
       {% endif %}
       {% if profile.gender %}
-        <div class="info-item"><span class="emoji">⚧</span><span class="label">Gênero:</span>{{ profile.get_gender_display }}</div>
+        <div class="info-item">
+          <span class="emoji">⚧</span>
+          <span class="label">Gênero:</span>
+          {{ profile.get_gender_display }}
+        </div>
       {% endif %}
       {% if profile.relationship_status %}
-        <div class="info-item"><span class="emoji">♥️</span><span class="label">Status:</span>{{ profile.get_relationship_status_display }}</div>
+        <div class="info-item">
+          <span class="emoji">♥️</span>
+          <span class="label">Status:</span>
+          {{ profile.get_relationship_status_display }}
+        </div>
       {% endif %}
       {% if interests_list %}
         <div class="interests-group" style="grid-column:span 2;">
-          <div class="info-item"><span class="emoji">🏷️</span><span class="label">Interesses:</span></div>
+          <div class="info-item">
+            <span class="emoji">🏷️</span>
+            <span class="label">Interesses:</span>
+          </div>
           <div>
             {% for tag in interests_list %}
               <span class="badge bg-secondary">{{ tag }}</span>
@@ -145,14 +209,36 @@
       </div>
     {% endif %}
 
-    <div class="profile-actions">
-        {% if is_me %}
-          <a href="{% url 'users:users-profile' %}" class="btn btnout">✏️ Editar Perfil</a>
-        {% else %}
-          <a href="#" class="btn btn-primary">💬 Enviar Mensagem</a>
-          <a href="{% url 'users:profile_treinos' usuario.username %}" class="btn btnout">💪 Ver Treinos</a>
-          <a href="{% url 'users:profile_historico' usuario.username %}" class="btn btnout">📊 Histórico</a>
+    {# Se for Personal, exibir seção Profissional #}
+    {% if profile.is_personal %}
+      <div class="form-section"
+           style="background:rgba(0,0,0,0.4); padding:1rem; border-radius:8px; margin-bottom:1.5rem;">
+        <h4 style="color:var(--primary); margin-bottom:0.5rem;">📚 Formação e Certificações</h4>
+        {% if profile.college %}
+          <div class="info-item">
+            <span class="emoji">🎓</span>
+            <span class="label">Faculdade:</span>
+            {{ profile.college }}
+          </div>
         {% endif %}
+        {% if profile.certifications %}
+          <div class="info-item">
+            <span class="emoji">📜</span>
+            <span class="label">Certificações:</span>
+            {{ profile.certifications }}
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="profile-actions">
+      {% if is_me %}
+        <a href="{% url 'users:users-profile' %}" class="btn btnout">✏️ Editar Perfil</a>
+      {% else %}
+        <a href="#" class="btn btn-primary">💬 Enviar Mensagem</a>
+        <a href="{% url 'users:profile_treinos' usuario.username %}" class="btn btnout">💪 Ver Treinos</a>
+        <a href="{% url 'users:profile_historico' usuario.username %}" class="btn btnout">📊 Histórico</a>
+      {% endif %}
     </div>
   </div>
 {% endblock content %}

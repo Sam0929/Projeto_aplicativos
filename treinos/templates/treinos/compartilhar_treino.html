@@ -1,15 +1,174 @@
-<h2>Compartilhar "{{ treino.nome }}"</h2>
-<form method="post">
-  {% csrf_token %}
-  {% for amigo in amigos %}
-    <div>
-      <label>
-        <input type="checkbox" name="amigos" value="{{ amigo.id }}">
-        {{ amigo.username }}
-      </label>
-    </div>
-  {% empty %}
-    <p>Você ainda não tem amigos.</p>
-  {% endfor %}
-  <button type="submit">Compartilhar</button>
-</form>
+{% extends 'treinos/base.html' %}
+{% load static %}
+
+{% block title %}Compartilhar Treino{% endblock %}
+{% block header %}Compartilhar: {{ treino.nome }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .share-container {
+    max-width: 800px;
+    margin: 40px auto;
+    color: #fff;
+    font-family: sans-serif;
+  }
+  .share-intro {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--primary);
+  }
+  .messages {
+    max-width: 600px;
+    margin: 0 auto 1.5rem;
+    list-style: none;
+    padding: 0;
+  }
+  .messages .message {
+    background: #333;
+    border-left: 4px solid var(--primary);
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+    border-radius: 6px;
+    color: #fff;
+  }
+  .messages .message.error { border-color: #e74c3c; }
+  .messages .message.success { border-color: #27ae60; }
+  .messages .message.warning { border-color: #f39c12; }
+  .messages .message.info { border-color: #3498db; }
+
+  .friends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  .friend-card {
+    background: #1f1f1f;
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+  }
+  .friend-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #444;
+    object-fit: cover;
+    margin-bottom: 0.75rem;
+    border: 2px solid var(--primary);
+  }
+  .friend-username {
+    font-size: 1.1rem;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    word-break: break-word;
+  }
+  .share-btn {
+    background: var(--primary);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: auto;
+  }
+  .share-btn:hover { background: #e55039; }
+
+  /* Quando o amigo já possui, o card fica menos opaco */
+  .friend-card.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .note {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    color: #aaa;
+  }
+
+  .back-link {
+    display: inline-block;
+    margin-top: 2rem;
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+  }
+  .back-link:hover { color: #e74c3c; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="share-container">
+
+  <div class="share-intro">
+    <p>
+      Selecione um ou mais amigos para enviar pedido de compartilhamento do treino
+      <strong>{{ treino.nome }}</strong>.
+    </p>
+  </div>
+
+  {% if messages %}
+    <ul class="messages">
+      {% for msg in messages %}
+        <li class="message {{ msg.tags }}">{{ msg }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if amigos_status %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="friends-grid">
+        {% for item in amigos_status %}
+          {% with amigo=item.user %}
+          <div class="friend-card {% if item.ja_possui %}disabled{% endif %}">
+            {% if amigo.profile.avatar %}
+              <img
+                src="{{ amigo.profile.avatar.url }}"
+                alt="Avatar {{ amigo.username }}"
+                class="friend-avatar"
+              >
+            {% else %}
+              <div class="friend-avatar"></div>
+            {% endif %}
+
+            <div class="friend-username">
+              {{ amigo.get_full_name|default:amigo.username }}
+            </div>
+
+            {% if item.ja_possui %}
+              <div class="note">Este usuário já possui este treino</div>
+            {% else %}
+              <label style="margin-top: 0.5rem; font-size: 0.95rem;">
+                <input type="checkbox" name="amigos" value="{{ amigo.id }}">
+                Enviar pedido
+              </label>
+            {% endif %}
+          </div>
+          {% endwith %}
+        {% endfor %}
+      </div>
+
+      <div style="text-align: center; margin-top: 1.5rem;">
+        <button type="submit" class="share-btn">📤 Enviar Pedidos</button>
+      </div>
+    </form>
+  {% else %}
+    <p class="message-empty">
+      Você não tem amigos disponíveis para compartilhar este treino.
+    </p>
+  {% endif %}
+
+  <div style="text-align: center;">
+    <a href="{% url 'treinos:lista_treinos' %}" class="back-link">
+      ← Voltar à lista de treinos
+    </a>
+  </div>
+</div>
+{% endblock %}

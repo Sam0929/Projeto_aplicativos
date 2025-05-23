@@ -61,6 +61,31 @@ class Profile(models.Model):
     show_training_time = models.BooleanField(default=True)
     show_experience = models.BooleanField(default=True)
 
+    # Identifica se é Personal Trainer
+    is_personal = models.BooleanField(
+        default=False,
+        help_text="Marque esta opção se este usuário for um Personal Trainer."
+    )
+
+    # **NOVOS** campos profissionais (só faz sentido se is_personal=True)
+    college = models.CharField(
+        max_length=150,
+        blank=True,
+        null=True,
+        help_text="Faculdade que este Personal frequentou (se aplicável)."
+    )
+    certifications = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Liste aqui certificações, cursos ou especializações profissionais."
+    )
+
+    # **NOVO** campo de privacidade: Ocultar e-mail de outros usuários
+    hide_email = models.BooleanField(
+        default=False,
+        help_text="Se marcado, ocultará seu e-mail para outros usuários (apenas você verá seu e-mail)."
+    )
+
     # timestamps
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True,     null=True)
@@ -71,7 +96,10 @@ class Profile(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         # redimensiona avatar
-        img = Image.open(self.avatar.path)
-        if img.height > 100 or img.width > 100:
-            img.thumbnail((100, 100))
-            img.save(self.avatar.path)
+        try:
+            img = Image.open(self.avatar.path)
+            if img.height > 100 or img.width > 100:
+                img.thumbnail((100, 100))
+                img.save(self.avatar.path)
+        except:
+            pass

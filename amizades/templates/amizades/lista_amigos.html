@@ -57,6 +57,10 @@
       margin: 0.5rem 0 0.5rem;
       font-size: 1.1rem;
       color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
     }
 
     .amigo-actions {
@@ -99,6 +103,15 @@
       color: #aaa;
       margin-top: 2rem;
     }
+
+    /* Badge pequeno para Personal */
+    .badge-personal-small {
+      background: var(--primary);
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+    }
   </style>
 {% endblock %}
 
@@ -119,7 +132,13 @@
             {# Avatar sobreposto #}
             <img src="{{ amigo.profile.avatar.url }}" alt="{{ amigo.username }}" class="amigo-avatar">
 
-            <h4>{{ amigo.username }}</h4>
+            <h4>
+              {{ amigo.get_full_name|default:amigo.username }}
+              {% if amigo.profile.is_personal %}
+                <span class="badge-personal-small">🏋️</span>
+              {% endif %}
+            </h4>
+
             <div class="amigo-actions">
               <a href="{% url 'users:profile_detail' amigo.username %}" class="btn secondary">Ver Perfil</a>
               <a href="#" class="btn primary" style="opacity: 0.6; cursor: not-allowed;" title="Selecione um treino para compartilhar">Compartilhar Execução</a>

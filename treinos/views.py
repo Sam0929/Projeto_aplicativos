@@ -1,5 +1,7 @@
+from django.contrib import messages 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+
 from .forms import TreinoForm
 from .models import Treino, GrupoMuscular, Exercicio, ExecucaoTreino, ExecucaoExercicio
 from django.utils.timezone import now
@@ -14,15 +16,38 @@ from itertools import chain
 from django.http import Http404
 
 
+User = get_user_model()
+
+
 @login_required
 def lista_treinos(request):
-    treinos_proprios = Treino.objects.filter(usuario=request.user).prefetch_related('grupomuscular_set')
-    treinos_recebidos = Treino.objects.filter(
-        compartilhamentos__para_usuario=request.user
-    ).prefetch_related('grupomuscular_set').distinct()
-    from itertools import chain
-    treinos = list(chain(treinos_proprios, treinos_recebidos))
-    return render(request, 'treinos/lista_treinos.html', {'treinos': treinos})
+    """
+    Lista apenas os treinos próprios + compartilhados que já foram aceitos.
+    Permite filtrar por nome via GET['q'].
+    """
+    q = request.GET.get('q', '').strip()
+    # Treinos próprios
+    qs_proprios = Treino.objects.filter(usuario=request.user)
+    # Treinos compartilhados com este usuário e aceitos
+    qs_compartilhados = Treino.objects.filter(
+        compartilhamentos__para_usuario=request.user,
+        compartilhamentos__aceito=True
+    )
+
+    if q:
+        qs_proprios = qs_proprios.filter(nome__icontains=q)
+        qs_compartilhados = qs_compartilhados.filter(nome__icontains=q)
+
+    treinos_proprios = qs_proprios.prefetch_related('grupomuscular_set')
+    treinos_compartilhados = qs_compartilhados.prefetch_related('grupomuscular_set')
+
+    # Mesclamos em uma lista, indicando “compartilhado” para os segundos
+    treinos = list(treinos_proprios) + list(treinos_compartilhados)
+
+    return render(request, 'treinos/lista_treinos.html', {
+        'treinos': treinos,
+        'q': q,
+    })
 
 
 @login_required
@@ -409,31 +434,13 @@ def iniciar_treino(request, treino_id):
         'compartilhamento': compartilhamento,
     })
 
-
-    
-
-
-
 User = get_user_model()
 
 @login_required
 def compartilhar_treino(request, treino_id):
     treino = get_object_or_404(Treino, id=treino_id)
 
-    if request.method == 'POST':
-        
-        amigos_ids = request.POST.getlist('amigos')
-        for amigo_id in amigos_ids:
-            amigo = get_object_or_404(User, id=amigo_id)
-            
-            CompartilhamentoTreino.objects.get_or_create(
-                treino=treino,
-                de_usuario=request.user,
-                para_usuario=amigo
-            )
-        return redirect('treinos:lista_treinos')
-
-    
+    # 1) Recupera todos os amigos do request.user:
     amizades_qs = Amizade.objects.filter(
         Q(usuario1=request.user) | Q(usuario2=request.user)
     )
@@ -444,10 +451,91 @@ def compartilhar_treino(request, treino_id):
         else:
             amigos.append(a.usuario1)
 
+    # 2) Monta uma lista de dicionários: para cada amigo, definimos se "já possui" o treino ou não
+    amigos_status = []
+    for amigo in amigos:
+        # Verifica se 'amigo' é o dono do treino
+        ja_dono = (treino.usuario_id == amigo.id)
+
+        # Verifica se já há um CompartilhamentoTreino (pendente ou aceito) para esse amigo e treino
+        existe_compart = CompartilhamentoTreino.objects.filter(
+            treino=treino,
+            para_usuario=amigo
+        ).exists()
+
+        ja_possui = ja_dono or existe_compart
+
+        amigos_status.append({
+            'user': amigo,
+            'ja_possui': ja_possui
+        })
+
+    if request.method == 'POST':
+        # Faz loop pelos checkboxes enviados
+        ids_selecionados = request.POST.getlist('amigos')
+        for amigo_id in ids_selecionados:
+            try:
+                amigo = User.objects.get(id=amigo_id)
+            except User.DoesNotExist:
+                continue
+
+            # Se já possui, ignoramos
+            if CompartilhamentoTreino.objects.filter(treino=treino, para_usuario=amigo).exists():
+                continue
+
+            # Cria novo pedido de compartilhamento
+            CompartilhamentoTreino.objects.create(
+                treino=treino,
+                de_usuario=request.user,
+                para_usuario=amigo
+            )
+        messages.success(request, f"Pedidos de compartilhamento enviados com sucesso!")
+        return redirect('treinos:lista_treinos')
+
     return render(request, 'treinos/compartilhar_treino.html', {
         'treino': treino,
-        'amigos': amigos
+        'amigos_status': amigos_status
     })
+
+
+
+@login_required
+def lista_pedidos_compartilhamento(request):
+    """
+    Mostra todos os compartilhamentos pendentes para o usuário atual,
+    ou seja, registros CompartilhamentoTreino.aceito==False e para_usuario=request.user.
+    """
+    pedidos = CompartilhamentoTreino.objects.filter(
+        para_usuario=request.user,
+        aceito=False
+    ).select_related('treino', 'de_usuario')
+    return render(request, 'treinos/pedidos_compartilhamento.html', {
+        'pedidos': pedidos
+    })
+
+
+@login_required
+def aceitar_compartilhamento(request, comp_id):
+    """
+    Aceita um pedido de compartilhamento, marcando aceito=True
+    """
+    comp = get_object_or_404(CompartilhamentoTreino, id=comp_id, para_usuario=request.user)
+    if not comp.aceito:
+        comp.aceito = True
+        comp.save()
+        messages.success(request, f"Você aceitou o treino “{comp.treino.nome}” de {comp.de_usuario.username}.")
+    return redirect('treinos:pedidos_compartilhamento')
+
+
+@login_required
+def recusar_compartilhamento(request, comp_id):
+    """
+    Recusa um pedido de compartilhamento, removendo o registro.
+    """
+    comp = get_object_or_404(CompartilhamentoTreino, id=comp_id, para_usuario=request.user)
+    comp.delete()
+    messages.info(request, f"Você recusou o treino “{comp.treino.nome}” de {comp.de_usuario.username}.")
+    return redirect('treinos:pedidos_compartilhamento')
     
 @login_required
 def adicionar_treino(request, pk):

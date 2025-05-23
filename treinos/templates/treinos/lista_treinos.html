@@ -1,35 +1,85 @@
 {% extends 'treinos/base.html' %}
+{% load static %}
 
 {% block title %}Meus Treinos{% endblock %}
 {% block header %}Meus Treinos{% endblock %}
-{% load static %}
-
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'treinos/css/lista_treinos.css' %}">
 {% endblock %}
 
 {% block content %}
+<!-- Agora o container tem largura maior e padding interno -->
+<div style="max-width: 1200px; margin: 20px auto; padding: 0 20px;">
 
+  <!-- Barra de busca (sem alterações) -->
+  <form method="get" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem;">
+    <input
+      type="text"
+      name="q"
+      value="{{ q }}"
+      placeholder="Buscar por nome de treino..."
+      style="
+        flex: 1;
+        background: #2a2a2a;
+        border: 1px solid #444;
+        border-radius: 8px;
+        padding: 0.8rem;
+        color: #fff;
+        font-size: 1rem;
+      "
+    >
+    <button
+      type="submit"
+      class="btn primary"
+      style="padding: 0.8rem 1.2rem;"
+    >
+      🔍 Buscar
+    </button>
+  </form>
 
-<div class="card-container">
-  {% for treino in treinos %}
-  <a href="{% url 'treinos:detalhe_treino' treino.id %}" class="card">
-    <h2>
-      {{ treino.nome }}
-      {% if treino.usuario != request.user %}
-        <span title="Treino compartilhado">🤝</span>
-      {% endif %}
-    </h2>
-    <div class="meta-info">
-      <span>{{ treino.grupomuscular_set.count }} grupos</span>
-      <span>{{ treino.total_exercicios }} exercícios</span>
-    </div>
-    {% if treino.usuario != request.user %}
-      <small class="shared-by">Compartilhado por {{ treino.usuario.username }}</small>
-    {% elif treino.ultima_execucao %}
-      <small>Último: {{ treino.ultima_execucao|date:"d/m/Y" }}</small>
-    {% endif %}
-  </a>
-{% endfor %}
+  <!-- Link para ver pedidos de compartilhamento pendentes -->
+  <div style="text-align: right; margin-bottom: 1rem;">
+    <a
+      href="{% url 'treinos:pedidos_compartilhamento' %}"
+      style="
+        color: var(--primary);
+        text-decoration: none;
+        font-size: 0.9rem;
+      "
+    >
+      📥 Ver Pedidos de Compartilhamento
+    </a>
+  </div>
+
+  <!-- Container de cards agora mais largo -->
+  <div class="card-container">
+    {% for treino in treinos %}
+      <a href="{% url 'treinos:detalhe_treino' treino.id %}" class="card">
+        <h2 style="font-size: 1.4rem;">
+          {{ treino.nome }}
+          {% if treino.usuario != request.user %}
+            <span title="Treino compartilhado" style="font-size: 1rem;"> 🤝</span>
+          {% endif %}
+        </h2>
+        <div class="meta-info" style="font-size: 0.95rem; color: #ccc;">
+          <span>{{ treino.grupomuscular_set.count }} grupos</span>
+          <span>{{ treino.total_exercicios }} exercícios</span>
+        </div>
+        {% if treino.usuario != request.user %}
+          <small class="shared-by" style="color: #aaa;">
+            Compartilhado por {{ treino.usuario.username }}
+          </small>
+        {% elif treino.ultima_execucao %}
+          <small style="color: #aaa;">
+            Último: {{ treino.ultima_execucao|date:"d/m/Y" }}
+          </small>
+        {% endif %}
+      </a>
+    {% empty %}
+      <p style="color: #aaa; text-align: center; margin-top: 2rem;">
+        Nenhum treino encontrado.
+      </p>
+    {% endfor %}
+  </div>
 </div>
 {% endblock %}

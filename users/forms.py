@@ -1,15 +1,14 @@
 # users/forms.py
 
 from django import forms
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import Profile
 
-# --------------------------------------------------
-# FORMULÁRIO DE CADASTRO (USER + PROFILE)
-# --------------------------------------------------
+User = get_user_model()
+
 class RegisterForm(UserCreationForm):
-    # Campos do User
+    # --- Campos de User ---
     first_name = forms.CharField(
         max_length=100, required=True,
         widget=forms.TextInput(attrs={'placeholder':'Primeiro nome','class':'form-control'})
@@ -35,7 +34,7 @@ class RegisterForm(UserCreationForm):
         widget=forms.PasswordInput(attrs={'placeholder':'Confirmar senha','class':'form-control'})
     )
 
-    # Campos do Profile
+    # --- Campos do Profile (parte “academia”) ---
     age = forms.IntegerField(
         required=True,
         widget=forms.NumberInput(attrs={'placeholder':'Idade','class':'form-control'})
@@ -53,35 +52,54 @@ class RegisterForm(UserCreationForm):
         widget=forms.NumberInput(attrs={'placeholder':'Anos de experiência','class':'form-control','step':'0.1'})
     )
 
+    # --- NOVO: Checkbox “Sou Personal Trainer” ---
+    is_personal = forms.BooleanField(
+        required=False,
+        label="Sou Personal Trainer",
+        widget=forms.CheckboxInput(attrs={'class':'form-check-input'})
+    )
+
+    # --- NOVOS campos profissionais (aparecerão para o Personal) ---
+    college = forms.CharField(
+        max_length=150, required=False,
+        widget=forms.TextInput(attrs={'placeholder':'Faculdade (se for Personal)','class':'form-control'})
+    )
+    certifications = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'placeholder':'Certificações e cursos…','class':'form-control','rows':3})
+    )
+
     class Meta:
         model = User
         fields = [
             'first_name','last_name','username','email',
             'password1','password2',
-            'age','weight','height','experience_years'
+            'age','weight','height','experience_years',
+            'is_personal','college','certifications',
         ]
 
     def save(self, commit=True):
-        # salva o User
         user = super().save(commit=False)
         user.first_name = self.cleaned_data['first_name']
         user.last_name  = self.cleaned_data['last_name']
         user.email      = self.cleaned_data['email']
         if commit:
             user.save()
-            # salva o Profile
-            profile, created = Profile.objects.get_or_create(user=user)
+            # Cria ou atualiza Profile
+            profile, _ = Profile.objects.get_or_create(user=user)
             profile.age               = self.cleaned_data['age']
             profile.weight            = self.cleaned_data['weight']
             profile.height            = self.cleaned_data['height']
             profile.experience_years  = self.cleaned_data['experience_years']
+            profile.is_personal       = self.cleaned_data.get('is_personal', False)
+            profile.college           = self.cleaned_data.get('college', '')
+            profile.certifications    = self.cleaned_data.get('certifications', '')
             profile.save()
         return user
 
 
 # --------------------------------------------------
-# LOGIN COM REMEMBER ME
-# --------------------------------------------------
+# LOGIN COM REMEMBER ME (sem alterações)
 class LoginForm(AuthenticationForm):
     username = forms.CharField(
         required=True,
@@ -99,8 +117,7 @@ class LoginForm(AuthenticationForm):
 
 
 # --------------------------------------------------
-# ATUALIZAÇÃO DO USER BÁSICO
-# --------------------------------------------------
+# ATUALIZAÇÃO DO USER BÁSICO (sem alterações)
 class UpdateUserForm(forms.ModelForm):
     username = forms.CharField(
         required=True,
@@ -117,10 +134,9 @@ class UpdateUserForm(forms.ModelForm):
 
 
 # --------------------------------------------------
-# ATUALIZAÇÃO DO PROFILE
-# --------------------------------------------------
+# ATUALIZAÇÃO DO PROFILE (UpdateProfileForm)
 class UpdateProfileForm(forms.ModelForm):
-    # Básicos
+    # Campos básicos
     age = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class':'form-control'}))
     weight = forms.FloatField(required=False, widget=forms.NumberInput(attrs={'class':'form-control','step':'0.1'}))
     height = forms.FloatField(required=False, widget=forms.NumberInput(attrs={'class':'form-control','step':'0.1'}))
@@ -150,6 +166,28 @@ class UpdateProfileForm(forms.ModelForm):
     show_weight = forms.BooleanField(required=False)
     show_height = forms.BooleanField(required=False)
     show_experience = forms.BooleanField(required=False)
+    hide_email = forms.BooleanField(
+        required=False,
+        label="Ocultar meu e-mail de outros usuários",
+        widget=forms.CheckboxInput(attrs={'class':'form-check-input'})
+    )
+
+    # **NOVO** checkbox “Marcar como Personal Trainer”
+    is_personal = forms.BooleanField(
+        required=False,
+        label="Marcar como Personal Trainer",
+        widget=forms.CheckboxInput(attrs={'class':'form-check-input'})
+    )
+
+    # **NOVOS** campos profissionais
+    college = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder':'Faculdade','class':'form-control'})
+    )
+    certifications = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class':'form-control','rows':3, 'placeholder':'Certificações e cursos…'})
+    )
 
     class Meta:
         model = Profile
@@ -157,5 +195,6 @@ class UpdateProfileForm(forms.ModelForm):
             'age','weight','height','experience_years',
             'avatar','cover_photo','bio','location','gender',
             'relationship_status','interests',
-            'show_age','show_weight','show_height','show_experience'
+            'show_age','show_weight','show_height','show_experience',
+            'hide_email','is_personal','college','certifications',
         ]

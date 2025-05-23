@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from datetime import timedelta
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 
 class Treino(models.Model):
     nome = models.CharField(max_length=100)
@@ -61,11 +62,21 @@ class ExecucaoExercicio(models.Model):
     carga_utilizada = models.FloatField()
     duracao = models.DurationField()
     
+
+
+User = get_user_model()
+
 class CompartilhamentoTreino(models.Model):
     treino = models.ForeignKey('Treino', on_delete=models.CASCADE, related_name='compartilhamentos')
-    de_usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='treinos_compartilhados')
-    para_usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='treinos_recebidos')
-    data_compartilhamento = models.DateTimeField(auto_now_add=True)
+    de_usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='compartilhamentos_feitos')
+    para_usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='compartilhamentos_recebidos')
+    criado_em = models.DateTimeField(auto_now_add=True)
+    aceito = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('treino', 'para_usuario')
+
+    def __str__(self):
+        status = "Aceito" if self.aceito else "Pendente"
+        return f"{self.de_usuario.username} → {self.para_usuario.username} ({status})"
+

@@ -15,4 +15,7 @@ urlpatterns = [
     path('<int:treino_id>/iniciar/', views.iniciar_treino, name='iniciar_treino'),
     path('compartilhar/<int:treino_id>/', views.compartilhar_treino, name='compartilhar_treino'),
     path('<int:pk>/adicionar/', views.adicionar_treino, name='adicionar_treino'),
+    path('pedidos_compartilhamento/', views.lista_pedidos_compartilhamento, name='pedidos_compartilhamento'),
+    path('aceitar_compartilhamento/<int:comp_id>/', views.aceitar_compartilhamento, name='aceitar_compartilhamento'),
+    path('recusar_compartilhamento/<int:comp_id>/', views.recusar_compartilhamento, name='recusar_compartilhamento'),
 ]
