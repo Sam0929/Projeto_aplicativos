@@ -66,6 +66,13 @@ class Profile(models.Model):
         default=False,
         help_text="Marque esta opção se este usuário for um Personal Trainer."
     )
+    
+    students = models.ManyToManyField(
+        User,
+        related_name='personals',
+        blank=True,
+        help_text='Usuários que este Personal escolheu como alunos'
+    )
 
     # **NOVOS** campos profissionais (só faz sentido se is_personal=True)
     college = models.CharField(

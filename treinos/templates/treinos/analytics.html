@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}Analytics de Treino{% endblock %}
-{% block header %}📈 Análise do Treino{% endblock %}
+{% block header %}📈 Análise do Treino : {{ user.username }} {% endblock %}
 
 {% block extra_css %}
 <style>
@@ -50,7 +50,6 @@
   cursor:pointer; }
 .exercise button:hover { background:var(--primary); color:#fff; }
 
-/* Removido o display:none daqui para permitir toggle via .d-none */
 .exercise-chart { margin:.5rem 0; }
 .exercise-chart img { max-width:100%; height:auto; border-radius:6px; }
 
@@ -63,6 +62,12 @@
 
   <form method="get" class="search-bar">
     <input type="text" name="q" value="{{ q }}" placeholder="Buscar treino…">
+
+    {% comment %} — Se já estivermos “vindo” de um aluno, preserve o usuario_id — {% endcomment %}
+    {% if request.GET.usuario_id %}
+      <input type="hidden" name="usuario_id" value="{{ request.GET.usuario_id }}"> 
+    {% endif %}
+
     {% if treino %}
       <input type="hidden" name="treino_id" value="{{ treino.id }}">
     {% endif %}
@@ -76,7 +81,7 @@
     <div class="card-grid">
       {% for t in todos_treinos %}
         {% with total=t.execucaotreino_set.count last=t.execucaotreino_set.last %}
-          <a href="?q={{ q|urlencode }}&treino_id={{ t.id }}&period={{ period|default:'all' }}"
+          <a href="?{% if request.GET.usuario_id %}usuario_id={{ request.GET.usuario_id }}&{% endif %}q={{ q|urlencode }}&treino_id={{ t.id }}&period={{ period|default:'all' }}"
              class="card-item">
             <h4>{{ t.nome }}</h4>
             <p>Total Execuções: {{ total }}</p>
@@ -91,13 +96,15 @@
     </div>
 
   {% else %}
-    <a href="{% url 'treinos:analytics' %}" class="back-link">← Voltar ao Overview</a>
+    <a href="{% url 'treinos:analytics' %}{% if request.GET.usuario_id %}?usuario_id={{ request.GET.usuario_id }}{% endif %}" class="back-link">
+      ← Voltar ao Overview
+    </a>
 
     <h2 style="margin:1.5rem 0; color:var(--primary)">📊 {{ treino.nome }}</h2>
 
     <div class="period-filter">
       {% for code,label in period_choices %}
-        <a href="?q={{ q|urlencode }}&treino_id={{ treino.id }}&period={{ code }}"
+        <a href="?{% if request.GET.usuario_id %}usuario_id={{ request.GET.usuario_id }}&{% endif %}q={{ q|urlencode }}&treino_id={{ treino.id }}&period={{ code }}"
            class="{% if period == code %}active{% endif %}">
           {{ label }}
         </a>
@@ -114,7 +121,7 @@
       <img src="data:image/png;base64,{{ chart_carga }}">
     </div>
     <div class="chart-block">
-      <h3>🔹 Execuções por Periodo Selecionado</h3>
+      <h3>🔹 Execuções por Período Selecionado</h3>
       <img src="data:image/png;base64,{{ chart_exec_periodo }}">
     </div>
     <div class="chart-block">
@@ -130,7 +137,6 @@
             <span>{{ ex.name }} — Δ {{ ex.pct|floatformat:1 }} %</span>
             <button type="button" class="toggle-chart">Exibir Gráfico</button>
           </div>
-          <!-- Inicialmente com d-none, mas sem display:none fixo -->
           <div class="exercise-chart d-none">
             <img src="data:image/png;base64,{{ ex.chart }}" alt="Gráfico {{ ex.name }}">
           </div>

@@ -3,6 +3,7 @@ from django.db import models
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.db.models import Q
 
 User = get_user_model()
 
@@ -71,3 +72,28 @@ class Amizade(models.Model):
         primeiro, segundo = (u1, u2) if u1.id < u2.id else (u2, u1)
         amizade, criada = cls.objects.get_or_create(usuario1=primeiro, usuario2=segundo)
         return amizade
+
+
+class PersonalInvite(models.Model):
+    """
+    Convite que um Personal envia a um usuário para torná-lo seu aluno.
+    """
+    personal = models.ForeignKey(
+        User,
+        related_name='convites_enviados',
+        on_delete=models.CASCADE
+    )
+    para_usuario = models.ForeignKey(
+        User,
+        related_name='convites_recebidos',
+        on_delete=models.CASCADE
+    )
+    criado_em = models.DateTimeField(default=timezone.now)
+    aceito = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('personal', 'para_usuario')
+        ordering = ('-criado_em',)
+
+    def __str__(self):
+        return f"{self.personal.username} → {self.para_usuario.username} (aceito={self.aceito})"

@@ -1,0 +1,212 @@
+{% extends 'treinos/base.html' %}
+{% load static %}
+
+{% block title %}Meus Personal Trainers{% endblock %}
+{% block header %}🏋️ Meus Personal Trainers{% endblock %}
+
+{% block extra_css %}
+<style>
+  .container-personals {
+    max-width: 800px;
+    margin: 40px auto;
+    color: #fff;
+    font-family: sans-serif;
+  }
+
+  .section-title {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--primary);
+    font-size: 1.4rem;
+  }
+
+  .card-list {
+    background: #1f1f1f;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    padding: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .card-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .card-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #333;
+  }
+
+  .card-list li:last-child {
+    border-bottom: none;
+  }
+
+  .info-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .avatar-small {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #555;
+    border: 2px solid var(--primary);
+  }
+
+  .person-name {
+    font-size: 1rem;
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .person-bio {
+    font-size: 0.85rem;
+    color: #ccc;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+  .btn-primary:hover {
+    background: #e55039;
+  }
+
+  .badge-pendente {
+    background: #f39c12;
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  .badge-aceito {
+    background: #27ae60;
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  .message-empty {
+    text-align: center;
+    color: #aaa;
+    margin-top: 2rem;
+  }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+  <div class="container-personals">
+    {# Se eu sou um Personal, não devo ver esta página #}
+    {% if is_personal %}
+      <p style="text-align:center; color:#aaa; margin-top:2rem;">
+        Apenas usuários comuns (alunos) podem ver esta página.
+      </p>
+    {% else %}
+      {# 1) Convites Pendentes #}
+      <div class="section-title">Convites Pendentes</div>
+      <div class="card-list">
+        {% if convites_recebidos %}
+          <ul>
+            {% for convite in convites_recebidos %}
+              {% with p=convite.personal %}
+              <li>
+                <div class="info-left">
+                  {% if p.profile.avatar %}
+                    <img src="{{ p.profile.avatar.url }}"
+                         alt="{{ p.username }}"
+                         class="avatar-small">
+                  {% else %}
+                    <div class="avatar-small"></div>
+                  {% endif %}
+                  <div>
+                    <span class="person-name">
+                      {{ p.get_full_name|default:p.username }}
+                    </span>
+                    <span class="person-bio">
+                      {% if p.profile.college %}
+                        🎓 {{ p.profile.college }}
+                      {% endif %}
+                      {% if p.profile.certifications %}
+                        {% if p.profile.college %} • {% endif %}
+                        📜 {{ p.profile.certifications|truncatechars:30 }}
+                      {% endif %}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <a href="{% url 'amizades:aceitar_convite' convite.id %}"
+                     class="btn-primary">
+                    Aceitar
+                  </a>
+                </div>
+              </li>
+              {% endwith %}
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="message-empty">Você não possui convites pendentes.</p>
+        {% endif %}
+      </div>
+
+      {# 2) Meus Personal Trainers (já aceitos) #}
+      <div class="section-title">Meus Personal Trainers</div>
+      <div class="card-list">
+        {% if personals %}
+          <ul>
+            {% for personal_user in personals %}
+              <li>
+                <div class="info-left">
+                  {% if personal_user.profile.avatar %}
+                    <img src="{{ personal_user.profile.avatar.url }}"
+                         alt="{{ personal_user.username }}"
+                         class="avatar-small">
+                  {% else %}
+                    <div class="avatar-small"></div>
+                  {% endif %}
+                  <div>
+                    <span class="person-name">
+                      {{ personal_user.get_full_name|default:personal_user.username }}
+                    </span>
+                    <span class="person-bio">
+                      {% if personal_user.profile.college %}
+                        🎓 {{ personal_user.profile.college }}
+                      {% endif %}
+                      {% if personal_user.profile.certifications %}
+                        {% if personal_user.profile.college %} • {% endif %}
+                        📜 {{ personal_user.profile.certifications|truncatechars:30 }}
+                      {% endif %}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <a href="{% url 'amizades:remover_aluno' personal_user.id %}"
+                     class="btn-primary"
+                     style="background:#e74c3c;">
+                    Remover
+                  </a>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="message-empty">Você ainda não possui um Personal Trainer.</p>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+{% endblock content %}

@@ -1,0 +1,230 @@
+{% extends 'treinos/base.html' %}
+{% load static %}
+
+{% block title %}Meus Alunos{% endblock %}
+{% block header %}👥 Meus Alunos{% endblock %}
+
+{% block extra_css %}
+<style>
+  .meus-alunos-container {
+    max-width: 800px;
+    margin: 40px auto;
+    color: #fff;
+  }
+  .section-title {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--primary);
+    font-size: 1.4rem;
+  }
+
+  .friends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .friend-card {
+    background: #1f1f1f;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    color: #fff;
+    padding-bottom: 1rem;
+  }
+
+  .friend-cover {
+    width: 100%;
+    height: 100px;
+    background-color: #333;
+    background-size: cover;
+    background-position: center;
+  }
+
+  .friend-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 3px solid var(--primary);
+    margin-top: -32px;
+    object-fit: cover;
+    background: #555;
+  }
+
+  .friend-card h4 {
+    margin: 0.5rem 0 0.5rem;
+    font-size: 1.1rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+  }
+
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: background 0.2s, color 0.2s;
+    text-decoration: none;
+  }
+  .btn-secondary:hover {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+    text-decoration: none;
+  }
+  .btn-primary:hover {
+    background: #e55039;
+  }
+
+  .badge-pendente {
+    background: #f39c12;
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+  }
+  .badge-aluno {
+    background: #27ae60;
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+  }
+
+  .message-empty {
+    text-align: center;
+    color: #aaa;
+    margin-top: 2rem;
+  }
+
+  .meus-alunos-list {
+    background: #1f1f1f;
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    margin-top: 2rem;
+  }
+  .meus-alunos-list h3 {
+    margin-bottom: 1rem;
+    color: var(--primary);
+  }
+  .meus-alunos-list ul {
+    list-style: none;
+    padding: 0;
+  }
+  .meus-alunos-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #333;
+  }
+  .meus-alunos-list li:last-child {
+    border-bottom: none;
+  }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+  <div class="meus-alunos-container">
+    {% if not request.user.profile.is_personal %}
+      <p>Somente Personal Trainers têm acesso a esta página.</p>
+    {% else %}
+      <div class="section-title">Convidar Amigos para serem seus Alunos</div>
+      {% if amigos %}
+        <div class="friends-grid">
+          {% for amigo in amigos %}
+            <div class="friend-card">
+              <div class="friend-cover"
+                   {% if amigo.profile.cover_photo %}
+                     style="background-image: url('{{ amigo.profile.cover_photo.url }}')"
+                   {% endif %}>
+              </div>
+              <img src="{{ amigo.profile.avatar.url }}" alt="{{ amigo.username }}" class="friend-avatar">
+
+              <h4>
+                {{ amigo.get_full_name|default:amigo.username }}
+                {% if amigo.profile.is_personal %}
+                  <span title="É Personal Trainer">🏋️</span>
+                {% endif %}
+              </h4>
+
+              {# Se já é aluno, exibe “Aluno” e botão de Analytics #}
+              {% if amigo in alunos %}
+                <span class="badge-aluno">Aluno</span>
+                <div style="margin-top: 0.5rem;">
+                </div>
+              {% else %}
+                {# Se convite pendente, exibe badge “Pedido Enviado” #}
+                {% if amigo.id in pendentes_ids %}
+                  <span class="badge-pendente">Pedido Enviado</span>
+                {% else %}
+                  <div style="margin-top: 0.5rem;">
+                    <a href="{% url 'amizades:enviar_convite_aluno' amigo.id %}" class="btn-primary">
+                      Convidar
+                    </a>
+                  </div>
+                {% endif %}
+              {% endif %}
+
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="message-empty">Você não possui amigos para convidar.</p>
+      {% endif %}
+
+      <div class="meus-alunos-list">
+        <h3>Meus Alunos</h3>
+        {% if alunos %}
+          <ul>
+            {% for aluno in alunos %}
+              <li>
+                <span>{{ aluno.get_full_name|default:aluno.username }}</span>
+                <div>
+                  <a href="{% url 'treinos:analytics' %}?usuario_id={{ aluno.id }}" class="btn-secondary">
+                    Ver Analytics
+                  </a>
+                  <a href="{% url 'amizades:remover_aluno' aluno.id %}" class="btn-secondary" style="margin-left: 0.5rem;">
+                    Remover
+                  </a>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="message-empty">Você ainda não tem alunos.</p>
+        {% endif %}
+      </div>
+
+      <hr style="margin: 2rem 0; border-color: #333;">
+
+      <div class="section-title">Convites Pendentes</div>
+      {% comment %}
+         Aqui, personal não recebe convites ─ apenas envia. 
+         Se você deseja mostrar convites que o personal recebeu (de outros),
+         basta adicionar ao contexto convites_recebidos e iterar como for necessário.
+      {% endcomment %}
+      <p class="message-empty">Nenhum convite pendente recebido.</p>
+    {% endif %}
+  </div>
+{% endblock %}

@@ -48,6 +48,8 @@
           <a href="{% url 'treinos:analytics' %}">📈 Analytics</a>
         </li>
 
+    
+
         {% if user.is_authenticated %}
           <li class="{% if request.resolver_match.url_name == 'adicionar' and request.resolver_match.namespace == 'amizades' %}active{% endif %}">
             <a href="{% url 'amizades:adicionar' %}">🔗 Adicionar Amigo</a>
@@ -58,6 +60,20 @@
           <li class="{% if request.resolver_match.url_name == 'lista_amigos' and request.resolver_match.namespace == 'amizades' %}active{% endif %}">
             <a href="{% url 'amizades:lista_amigos' %}">👥 Meus Amigos</a>
           </li>
+
+          {% if request.user.profile.is_personal %}
+            <li{% if request.resolver_match.namespace == 'amizades' and request.resolver_match.url_name == 'meus_alunos' %} class="active"{% endif %}>
+              <a href="{% url 'amizades:meus_alunos' %}">🧑‍🎓​​ Meus Alunos</a>
+            </li>
+          {% endif %}
+
+          {% if not request.user.profile.is_personal %}
+            <li{% if request.resolver_match.namespace == 'amizades' and request.resolver_match.url_name == 'meus_personals' %} class="active"{% endif %}>
+              <a href="{% url 'amizades:meus_personals' %}">🧑‍🏫​ Personal</a>
+            </li>
+          {% endif %}
+
+
         {% endif %}
       </ul>
     </nav>

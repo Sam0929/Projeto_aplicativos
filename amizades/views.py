@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from .models import PedidoAmizade, Amizade
 from django.db.models import Q
+from .models import Amizade, PedidoAmizade, PersonalInvite
+from amizades import models
 
 
 
@@ -139,3 +141,116 @@ def lista_amigos(request):
 
     return render(request, 'amizades/lista_amigos.html', {'amigos': amigos})
 
+
+User = get_user_model()
+
+
+@login_required
+def meus_alunos(request):
+    # Somente Personal Trainers acessam esta página
+    if not hasattr(request.user, 'profile') or not request.user.profile.is_personal:
+        return render(request, 'amizades/meus_alunos.html')
+
+    # 1) Montar lista de “amigos” (outros usuários com quem existe Amizade)
+    amizades_qs = Amizade.objects.filter(
+        Q(usuario1=request.user) | Q(usuario2=request.user)
+    )
+    amigos = []
+    for amizade in amizades_qs:
+        if amizade.usuario1 == request.user:
+            amigos.append(amizade.usuario2)
+        else:
+            amigos.append(amizade.usuario1)
+
+    # 2) Alunos já aceitos (ManyToManyField students no Profile)
+    alunos = request.user.profile.students.all()
+
+    # 3) IDs de convites pendentes enviados por este Personal
+    pendentes_qs = PersonalInvite.objects.filter(
+        personal=request.user,
+        aceito=False
+    ).values_list('para_usuario_id', flat=True)
+    pendentes_ids = set(pendentes_qs)
+
+    return render(request, 'amizades/meus_alunos.html', {
+        'amigos': amigos,
+        'alunos': alunos,
+        'pendentes_ids': pendentes_ids,
+    })
+
+
+@login_required
+def enviar_convite_aluno(request, amigo_id):
+    # Só Personal Trainer pode enviar convite
+    if not hasattr(request.user, 'profile') or not request.user.profile.is_personal:
+        return redirect('amizades:meus_alunos')
+
+    amigo = get_object_or_404(User, pk=amigo_id)
+
+    # Verificar se são amigos antes de enviar
+    existe = Amizade.objects.filter(
+        Q(usuario1=request.user, usuario2=amigo) | Q(usuario1=amigo, usuario2=request.user)
+    ).exists()
+    if not existe:
+        messages.error(request, "Você só pode convidar quem é seu amigo.")
+        return redirect('amizades:meus_alunos')
+
+    # Criar convite (ou ignorar se já existe)
+    PersonalInvite.objects.get_or_create(
+        personal=request.user,
+        para_usuario=amigo
+    )
+    return redirect('amizades:meus_alunos')
+
+
+@login_required
+def aceitar_convite(request, pk):
+    convite = get_object_or_404(
+        PersonalInvite,
+        pk=pk,
+        para_usuario=request.user,
+        aceito=False
+    )
+    convite.aceito = True
+    convite.save()
+    # adiciona o aluno no Profile do personal
+    convite.personal.profile.students.add(request.user)
+    messages.success(request, f"Você agora é aluno de {convite.personal.username}.")
+    return redirect('amizades:meus_personals')
+
+
+
+@login_required
+def remover_aluno(request, user_id):
+    profile = request.user.profile
+    aluno = get_object_or_404(User, pk=user_id)
+    profile.students.remove(aluno)
+    messages.success(request, f"{aluno.get_full_name() or aluno.username} foi removido dos seus alunos.")
+    return redirect('amizades:meus_personals')
+
+@login_required
+def meus_personals(request):
+    # 1) Convida apenas se este usuário NÃO for Personal
+    if hasattr(request.user, 'profile') and request.user.profile.is_personal:
+        # Se for Personal, não tem sentido ver “meus_personals” (é um Personal).
+        # Você pode redirecionar ou exibir mensagem simples:
+        return render(request, 'amizades/meus_personals.html', {
+            'is_personal': True
+        })
+
+    # 2) Convites pendentes enviados a este usuário (i.e. este usuário é “para_usuario”)
+    convites_recebidos = PersonalInvite.objects.filter(
+        para_usuario=request.user,
+        aceito=False
+    ).select_related('personal__profile')
+
+    # 3) Todos os Personals que aceitaram este aluno → 
+    #    “request.user.personals” retorna todos os Profile cujo M2M students inclui este user.
+    perfis_personals = request.user.personals.all()  # Queryset de Profile
+    personals_users = [p.user for p in perfis_personals]  # converte pra lista de User
+
+    return render(request, 'amizades/meus_personals.html', {
+        'convites_recebidos': convites_recebidos,
+        'personals': personals_users,
+        'is_personal': False,
+    })
