@@ -582,19 +582,23 @@ def adicionar_treino(request, pk):
     return redirect('treinos:detalhe_treino', pk=treino_original.pk)
 
 
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from django.utils import timezone
-from datetime import timedelta
 from itertools import chain, groupby
 from collections import defaultdict
-import matplotlib.pyplot as plt
-from matplotlib.dates import AutoDateLocator, DateFormatter
+from datetime import timedelta
 from io import BytesIO
 import base64
-from django.contrib import messages
 
-from .models import Treino, ExecucaoTreino, ExecucaoExercicio, CompartilhamentoTreino
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from django.utils import timezone
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+
+import matplotlib.pyplot as plt
+from matplotlib.dates import AutoDateLocator, DateFormatter
+
+from treinos.models import Treino, ExecucaoTreino, ExecucaoExercicio, CompartilhamentoTreino
+from amizades.models import PersonalInvite
 
 @login_required
 def analytics(request):
@@ -608,11 +612,9 @@ def analytics(request):
             try:
                 aluno = get_user_model().objects.get(pk=int(usuario_id))
             except get_user_model().DoesNotExist:
-                # se não achar esse ID, apenas ficamos com o próprio request.user
                 aluno = None
             if aluno and (aluno in request.user.profile.students.all()):
                 target_user = aluno
-            # caso contrário, ignoramos o usuario_id e deixamos target_user = request.user
     # — fim da lógica de Personal
 
     user = target_user
@@ -680,16 +682,25 @@ def analytics(request):
     primeira_data = execucoes[0].data_inicio.date()
     ultima_data   = execucoes[-1].data_inicio.date()
 
+    # —————
     # Helper para gerar gráficos e retornar base64
-    def make_chart(x, y, title, ylabel):
+    # —————
+    def make_chart(x_list, y_list, title, ylabel):
+        # 1) primeiro “empacotamos” e ordenamos pelo próprio x (que são datas)
+        paired = sorted(zip(x_list, y_list), key=lambda pair: pair[0])
+        xs, ys = zip(*paired)
+
         fig, ax = plt.subplots()
-        ax.plot(x, y, marker='o', linestyle='-')
+        ax.plot(xs, ys, marker='o', linestyle='-')  # já estará em ordem cronológica
+
         loc = AutoDateLocator()
         fmt = DateFormatter('%d/%m/%Y')
         ax.xaxis.set_major_locator(loc)
         ax.xaxis.set_major_formatter(fmt)
         fig.autofmt_xdate(rotation=45, ha='right')
-        for xi, yi in zip(x, y):
+
+        # Anotações de cada ponto
+        for xi, yi in zip(xs, ys):
             ax.annotate(
                 xi.strftime('%d/%m/%Y'),
                 (xi, yi),
@@ -699,22 +710,28 @@ def analytics(request):
                 color='#ddd',
                 fontsize=8
             )
+
         ax.set_title(title)
         ax.set_ylabel(ylabel)
         ax.grid(True, linestyle='--', alpha=0.6)
         fig.tight_layout()
+
         buf = BytesIO()
         fig.savefig(buf, format='png')
         buf.seek(0)
         plt.close(fig)
         return base64.b64encode(buf.getvalue()).decode()
 
+    # —————
     # Carga total por execução
+    # —————
     datas  = [e.data_inicio.date() for e in execucoes]
     cargas = [e.carga_total for e in execucoes]
     chart_carga = make_chart(datas, cargas, "Carga Total por Execução", "Carga (kg)")
 
-    # Total de execuções no período: um único ponto
+    # —————
+    # Total de execuções no período: como é um único ponto, mantemos a mesma lógica
+    # —————
     total_exec = len(execucoes)
     chart_exec_periodo = make_chart(
         [ultima_data],
@@ -723,7 +740,9 @@ def analytics(request):
         "Qtd"
     )
 
+    # —————
     # Desempenho médio
+    # —————
     hist_items = ExecucaoExercicio.objects.filter(execucao_treino__in=execucoes)
     max_por_ex = defaultdict(int)
     for item in hist_items:
@@ -742,12 +761,13 @@ def analytics(request):
         vals_perf.append(score)
     chart_perf = make_chart(datas_perf, vals_perf, "Desempenho Médio (1=Ruim…4=Ótimo)", "")
 
+    # —————
     # Grupos musculares (progressão por exercício)
+    # —————
     groups_data = []
-    all_items = ExecucaoExercicio.objects.filter(execucao_treino__in=execucoes)\
+    all_items = ExecucaoExercicio.objects.filter(execucao_treino__in=execucoes) \
                                         .select_related('exercicio__grupo')
     sorted_items = sorted(all_items, key=lambda i: i.exercicio.grupo.nome)
-    from itertools import groupby
     for grp_name, grp_iter in groupby(sorted_items, key=lambda i: i.exercicio.grupo.nome):
         grp_list = list(grp_iter)
         exs = []
@@ -783,3 +803,4 @@ def analytics(request):
         'groups_data':        groups_data,
         'period_choices':     period_choices,
     })
+
