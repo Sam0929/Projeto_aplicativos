@@ -29,7 +29,7 @@
             <div class="exercicio-info" style="display: flex; flex-direction: column;">
               <span class="nome" style="font-size: 1rem; font-weight: 600; color: #fff;">{{ exercicio.nome }}</span>
               <span class="detalhes" style="font-size: 0.9rem; color: #ccc;">
-                {{ exercicio.series }}×{{ exercicio.repeticoes }} | {{ exercicio.descanso }}s
+                {{ exercicio.series }}×{{ exercicio.repeticoes }} | {{ exercicio.descanso }}s
               </span>
             </div>
             <span class="carga" style="font-size: 0.9rem; color: #aaa;">
@@ -41,9 +41,9 @@
     </div>
   {% endfor %}
 
-  <div class="actions" style="margin-top: 24px; display: flex; align-items: center; gap: 12px;">
+  <div class="actions" style="margin-top: 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
     {% if acesso_proprio %}
-      <div style="display: flex; gap: 12px;">
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
         <a 
           href="{% url 'treinos:editar_treino' treino.pk %}" 
           style="background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 12px; border-radius: 6px; text-decoration: none;">
@@ -71,16 +71,31 @@
         style="margin-left: auto; background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 12px; border-radius: 6px; text-decoration: none;">
         🤝 Compartilhar
       </a>
-      {% else %}
+
+      {% if request.user.is_staff %}
+          {% if treino.is_padrao %}
+            <span class="status-padrao" style="margin-left:12px; color:#0f0;">✅ Treino Padrão</span>
+          {% else %}
+            <form method="post"
+                  action="{% url 'treinos:tornar_padrao' treino.id %}"
+                  style="display:inline-block; margin-left:12px;">
+              {% csrf_token %}
+              <button type="submit"
+                      style="background:var(--primary); color:#fff; padding:8px 12px; border-radius:6px; border:none; cursor:pointer;">
+                📋 Tornar Treino Padrão
+              </button>
+            </form>
+          {% endif %}
+        {% endif %}
+
+    {% else %}
       {% if compartilhamento %}
-        <!-- Se o treino foi compartilhado, permite iniciar -->
         <a 
           href="{% url 'treinos:iniciar_treino' treino.pk %}" 
           style="background: var(--primary); color: #fff; padding: 8px 12px; border-radius: 6px; text-decoration: none;">
           ▶️ Iniciar
         </a>
       {% else %}
-        <!-- Caso contrário, permite adicionar ao perfil -->
         <form action="{% url 'treinos:adicionar_treino' treino.pk %}" method="post" style="display: flex; gap: 12px;">
           {% csrf_token %}
           <button 
@@ -90,14 +105,13 @@
           </button>
         </form>
       {% endif %}
-    
+
       <a 
         href="{% url 'treinos:compartilhar_treino' treino.pk %}" 
         style="margin-left: auto; background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 12px; border-radius: 6px; text-decoration: none;">
         🤝 Compartilhar
       </a>
     {% endif %}
-    
   </div>
 </div>
 {% endblock %}

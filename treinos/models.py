@@ -11,6 +11,7 @@ class Treino(models.Model):
     
     duracao = models.DurationField(default=timedelta(0))
     carga_total = models.FloatField(default=0.0)
+    is_padrao = models.BooleanField(default=False)  # ← novo campo para marcar “Treino Padrão”
     
     @property
     def total_exercicios(self):

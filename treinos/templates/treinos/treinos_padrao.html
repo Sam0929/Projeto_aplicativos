@@ -1,0 +1,132 @@
+{# treinos/templates/treinos/treinos_padrao.html #}
+{% extends 'treinos/base.html' %}
+{% load static %}
+{% load treino_extras %}
+
+{% block title %}Treinos Padrão{% endblock %}
+{% block header %}🏷 Treinos Padrão{% endblock %}
+
+{% block extra_css %}
+<style>
+  .padrao-container {
+    max-width: 900px;
+    margin: 40px auto;
+    color: #fff;
+  }
+  .padrao-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px,1fr));
+    gap: 1rem;
+  }
+  .padrao-card {
+    background: #1f1f1f;
+    border-radius: 10px;
+    padding: 1.2rem;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: #fff;
+  }
+  .padrao-card h4 {
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+  }
+  .padrao-card p {
+    font-size: 0.9rem;
+    color: #ccc;
+    margin-bottom: 1rem;
+  }
+
+  /* botões dentro do card */
+  .padrao-card form,
+  .padrao-card .details-link,
+  .padrao-card .details-link-2 {
+    margin-top: auto;
+  }
+
+  .padrao-card .btn {
+    width: 100%;
+    padding: 0.6rem;
+    border-radius: 6px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 0.95rem;
+    border: none;
+    cursor: pointer;
+    display: block;
+  }
+  .padrao-card .btn.primary {
+    background: var(--primary);
+    color: #fff;
+  }
+  .padrao-card .btn.primary:hover {
+    background: #e55039;
+  }
+  .padrao-card .btn.secondary {
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    margin-top: 0.5rem;
+  }
+  .padrao-card .btn.secondary:hover {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .message-empty {
+    text-align: center;
+    color: #aaa;
+    margin-top: 2rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="padrao-container">
+  {% if treinos %}
+    <div class="padrao-grid">
+      {% for treino in treinos %}
+        <div class="padrao-card">
+          <h4>{{ treino.nome }}</h4>
+          {% if treino.usuario.is_staff %}
+            <p>Criado por: {{ treino.usuario.get_full_name|default:treino.usuario.username }}</p>
+          {% endif %}
+          {% if treino.grupomuscular_set.count %}
+            <p><strong>Grupos Musculares:</strong> {{ treino.grupomuscular_set.count }}</p>
+          {% endif %}
+
+          {# Se o usuário já duplicou esse treino, mostra apenas “Ver Detalhes” do treino copiado #}
+          {% if treino.id in ja_duplicados %}
+            {% with meu_id=ja_duplicados|dict_key:treino.id %}
+              <a href="{% url 'treinos:detalhe_treino' meu_id %}" class="btn secondary">
+                🔍 Ver Detalhes
+              </a>
+            {% endwith %}
+
+          {# Senão, exibe “Adicionar ao meu Perfil” e, abaixo, “🔍 Ver Detalhes” do PRÓPRIO treino padrão #}
+          {% else %}
+            <form method="post"
+                  action="{% url 'treinos:duplicar_treino_padrao' treino.id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn primary">
+                ➕ Adicionar ao meu Perfil
+              </button>
+            </form>
+
+            {# Link para ver detalhes do treino PADRÃO, antes mesmo de adicionar #}
+            <a href="{% url 'treinos:detalhe_treino' treino.id %}"
+               class="btn secondary">
+              🔍 Ver Detalhes
+            </a>
+          {% endif %}
+
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="message-empty">Não há treinos padrão disponíveis.</p>
+  {% endif %}
+</div>
+{% endblock %}

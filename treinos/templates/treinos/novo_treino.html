@@ -8,6 +8,26 @@
 {% endblock %}
 {% block content %}
 
+
+
+<div style="max-width: 1000px; margin: 20px auto; padding: 0 30px;">
+  <a href="{% url 'treinos:treinos_padrao' %}"
+      style="
+        display:inline-block;
+        background: transparent;
+        border: 1px solid var(--primary);
+        color: var(--primary);
+        padding: 0.6rem 1rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.95rem;
+        margin-bottom: 1rem;
+      ">
+    📂 Ver Treinos Padrão
+  </a>
+</div>
+
+
 <div class="container">
   <form class="treino-form" method="post" id="mainForm">
     {% csrf_token %}

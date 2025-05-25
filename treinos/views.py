@@ -804,3 +804,79 @@ def analytics(request):
         'period_choices':     period_choices,
     })
 
+
+from itertools import chain
+
+@login_required
+def treinos_padrao(request):
+    # Busca apenas os treinos que já receberam is_padrao=True
+    padroes = Treino.objects.filter(is_padrao=True)
+
+    # Agora precisamos saber quais desses o usuário já duplicou no perfil dele:
+    meus_treinos = Treino.objects.filter(usuario=request.user, is_padrao=False)
+    por_nome = {t.nome: t.id for t in meus_treinos}
+
+    mapping = {}
+    for pad in padroes:
+        if pad.nome in por_nome:
+            mapping[pad.id] = por_nome[pad.nome]
+
+    return render(request, 'treinos/treinos_padrao.html', {
+        'treinos': padroes,
+        'ja_duplicados': mapping,
+    })
+
+
+@login_required
+def duplicar_treino_padrao(request, treino_id):
+    """
+    Recebe treino_id → é o ID do Treino PADRÃO (criado por staff). Após duplicar,
+    cria um Treino novo (para request.user), cópia de Grupos+Exercícios,
+    e redireciona para detalhe do treino criado.
+    """
+    padrao = get_object_or_404(Treino, id=treino_id, usuario__is_staff=True)
+
+    # Se o usuário já tiver um treino com o mesmo nome (ou seja, já duplicou antes),
+    # só redirecionamos para o detalhe desse treino:
+    if Treino.objects.filter(usuario=request.user, nome=padrao.nome).exists():
+        user_treino = Treino.objects.get(usuario=request.user, nome=padrao.nome)
+        return redirect('treinos:detalhe_treino', pk=user_treino.id)
+
+    # Caso contrário, criamos uma cópia completa:
+    user_treino = Treino.objects.create(
+        nome=padrao.nome,
+        usuario=request.user,
+        duracao=padrao.duracao,
+        carga_total=padrao.carga_total
+    )
+    # Copia todos os grupos & exercícios
+    for grupo in padrao.grupomuscular_set.all():
+        novo_grupo = GrupoMuscular.objects.create(
+            treino=user_treino,
+            nome=grupo.nome
+        )
+        for ex in grupo.exercicio_set.all():
+            Exercicio.objects.create(
+                grupo=novo_grupo,
+                nome=ex.nome,
+                series=ex.series,
+                repeticoes=ex.repeticoes,
+                descanso=ex.descanso,
+                carga_maxima=ex.carga_maxima
+            )
+
+    return redirect('treinos:detalhe_treino', pk=user_treino.id)
+
+
+
+@login_required
+def tornar_padrao(request, treino_id):
+    treino = get_object_or_404(Treino, pk=treino_id)
+
+    # Só staff pode marcar como padrão
+    if not request.user.is_staff:
+        return redirect('treinos:detalhe_treino', pk=treino.id)
+
+    treino.is_padrao = True
+    treino.save()
+    return redirect('treinos:detalhe_treino', pk=treino.id)

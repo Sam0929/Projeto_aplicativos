@@ -19,4 +19,7 @@ urlpatterns = [
     path('aceitar_compartilhamento/<int:comp_id>/', views.aceitar_compartilhamento, name='aceitar_compartilhamento'),
     path('recusar_compartilhamento/<int:comp_id>/', views.recusar_compartilhamento, name='recusar_compartilhamento'),
     path('analytics/', views.analytics, name='analytics'),
+    path('padrao/', views.treinos_padrao, name='treinos_padrao'),
+    path('padrao/<int:treino_id>/duplicar/', views.duplicar_treino_padrao, name='duplicar_treino_padrao'),
+    path('<int:treino_id>/tornar-padrao/', views.tornar_padrao, name='tornar_padrao'),
 ]
