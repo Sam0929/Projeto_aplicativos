@@ -21,7 +21,8 @@ cp .env.example .env
 Instale as dependências:
 ```sh
 pip install matplotlib
-
+```
+```sh
 pip install -r requirements.txt
 ```
 
