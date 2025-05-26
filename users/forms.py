@@ -1,4 +1,4 @@
-# users/forms.py
+
 
 from django import forms
 from django.contrib.auth import get_user_model
@@ -8,7 +8,7 @@ from .models import Profile
 User = get_user_model()
 
 class RegisterForm(UserCreationForm):
-    # --- Campos de User ---
+   
     first_name = forms.CharField(
         max_length=100, required=True,
         widget=forms.TextInput(attrs={'placeholder':'Primeiro nome','class':'form-control'})
@@ -34,7 +34,7 @@ class RegisterForm(UserCreationForm):
         widget=forms.PasswordInput(attrs={'placeholder':'Confirmar senha','class':'form-control'})
     )
 
-    # --- Campos do Profile (parte “academia”) ---
+   
     age = forms.IntegerField(
         required=True,
         widget=forms.NumberInput(attrs={'placeholder':'Idade','class':'form-control'})
@@ -52,14 +52,14 @@ class RegisterForm(UserCreationForm):
         widget=forms.NumberInput(attrs={'placeholder':'Anos de experiência','class':'form-control','step':'0.1'})
     )
 
-    # --- NOVO: Checkbox “Sou Personal Trainer” ---
+   
     is_personal = forms.BooleanField(
         required=False,
         label="Sou Personal Trainer",
         widget=forms.CheckboxInput(attrs={'class':'form-check-input'})
     )
 
-    # --- NOVOS campos profissionais (aparecerão para o Personal) ---
+    
     college = forms.CharField(
         max_length=150, required=False,
         widget=forms.TextInput(attrs={'placeholder':'Faculdade (se for Personal)','class':'form-control'})
@@ -85,7 +85,7 @@ class RegisterForm(UserCreationForm):
         user.email      = self.cleaned_data['email']
         if commit:
             user.save()
-            # Cria ou atualiza Profile
+            
             profile, _ = Profile.objects.get_or_create(user=user)
             profile.age               = self.cleaned_data['age']
             profile.weight            = self.cleaned_data['weight']
@@ -98,8 +98,7 @@ class RegisterForm(UserCreationForm):
         return user
 
 
-# --------------------------------------------------
-# LOGIN COM REMEMBER ME (sem alterações)
+
 class LoginForm(AuthenticationForm):
     username = forms.CharField(
         required=True,
@@ -116,8 +115,7 @@ class LoginForm(AuthenticationForm):
         fields = ['username','password','remember_me']
 
 
-# --------------------------------------------------
-# ATUALIZAÇÃO DO USER BÁSICO (sem alterações)
+
 class UpdateUserForm(forms.ModelForm):
     username = forms.CharField(
         required=True,
@@ -133,20 +131,19 @@ class UpdateUserForm(forms.ModelForm):
         fields = ['username','email']
 
 
-# --------------------------------------------------
-# ATUALIZAÇÃO DO PROFILE (UpdateProfileForm)
+
 class UpdateProfileForm(forms.ModelForm):
-    # Campos básicos
+    
     age = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class':'form-control'}))
     weight = forms.FloatField(required=False, widget=forms.NumberInput(attrs={'class':'form-control','step':'0.1'}))
     height = forms.FloatField(required=False, widget=forms.NumberInput(attrs={'class':'form-control','step':'0.1'}))
     experience_years = forms.FloatField(required=False, widget=forms.NumberInput(attrs={'class':'form-control','step':'0.1'}))
 
-    # Mídias
+    
     avatar = forms.ImageField(required=False, widget=forms.FileInput(attrs={'class':'form-control-file'}))
     cover_photo = forms.ImageField(required=False, widget=forms.FileInput(attrs={'class':'form-control-file'}))
 
-    # Rede social
+   
     bio = forms.CharField(required=False, widget=forms.Textarea(attrs={'class':'form-control','rows':3}))
     location = forms.CharField(required=False, widget=forms.TextInput(attrs={'class':'form-control'}))
     gender = forms.ChoiceField(
@@ -161,7 +158,7 @@ class UpdateProfileForm(forms.ModelForm):
     )
     interests = forms.CharField(required=False, widget=forms.TextInput(attrs={'class':'form-control'}))
 
-    # Privacidade
+    
     show_age = forms.BooleanField(required=False)
     show_weight = forms.BooleanField(required=False)
     show_height = forms.BooleanField(required=False)
@@ -172,14 +169,14 @@ class UpdateProfileForm(forms.ModelForm):
         widget=forms.CheckboxInput(attrs={'class':'form-check-input'})
     )
 
-    # **NOVO** checkbox “Marcar como Personal Trainer”
+    
     is_personal = forms.BooleanField(
         required=False,
         label="Marcar como Personal Trainer",
         widget=forms.CheckboxInput(attrs={'class':'form-check-input'})
     )
 
-    # **NOVOS** campos profissionais
+    
     college = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={'placeholder':'Faculdade','class':'form-control'})

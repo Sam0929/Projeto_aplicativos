@@ -32,9 +32,9 @@ def lista_treinos(request):
     Permite filtrar por nome via GET['q'].
     """
     q = request.GET.get('q', '').strip()
-    # Treinos próprios
+    
     qs_proprios = Treino.objects.filter(usuario=request.user)
-    # Treinos compartilhados com este usuário e aceitos
+    
     qs_compartilhados = Treino.objects.filter(
         compartilhamentos__para_usuario=request.user,
         compartilhamentos__aceito=True
@@ -47,7 +47,7 @@ def lista_treinos(request):
     treinos_proprios = qs_proprios.prefetch_related('grupomuscular_set')
     treinos_compartilhados = qs_compartilhados.prefetch_related('grupomuscular_set')
 
-    # Mesclamos em uma lista, indicando “compartilhado” para os segundos
+    
     treinos = list(treinos_proprios) + list(treinos_compartilhados)
 
     return render(request, 'treinos/lista_treinos.html', {
@@ -65,24 +65,23 @@ def detalhe_treino(request, pk):
       Caso exista, mostra “🔗 Compartilhado por …”, caso contrário, permite visualizar normalmente.
     """
 
-    # 1) Busca o treino sem filtrar por usuário, só pelo ID
+    
     treino = get_object_or_404(
         Treino.objects.prefetch_related('grupomuscular_set__exercicio_set', 'usuario'),
         pk=pk
     )
 
-    # 2) Verifica se é acesso do próprio dono
+    
     acesso_proprio = (treino.usuario == request.user)
 
-    # 3) Se não for o próprio dono, tenta obter o compartilhamento
+    
     compartilhamento = None
     if not acesso_proprio:
         compartilhamento = CompartilhamentoTreino.objects.filter(
             treino=treino,
             para_usuario=request.user
         ).first()
-        # Observação: não lançamos 404 se não tiver compartilhamento,
-        # pois agora qualquer um pode ver o treino. Apenas exibiremos se veio compartilhado.
+        
 
     return render(request, 'treinos/detalhe_treino.html', {
         'treino': treino,
@@ -93,7 +92,7 @@ def detalhe_treino(request, pk):
 
 @login_required
 def historico_treino(request):
-    # 1) Busque todas as execuções do usuário
+    
     execucoes = (
         ExecucaoTreino.objects
         .filter(usuario=request.user)
@@ -101,7 +100,7 @@ def historico_treino(request):
         .order_by('-data_inicio')
     )
 
-    # 2) Pré-calcule estatísticas de moda e máxima para cada treino+exercício
+    
     global_stats = {}
     treino_ids = {e.treino_id for e in execucoes}
     for tid in treino_ids:
@@ -126,30 +125,29 @@ def historico_treino(request):
         perf_indices = []
         grupos_data = []
 
-        # Destinado a cada grupo muscular
+        
         for grupo in execucao.treino.grupomuscular_set.all().prefetch_related('exercicio_set'):
             exercicios_data = []
 
             for ex in grupo.exercicio_set.all():
-                # Obter todas as ExecucaoExercicio desta execução e exercício
+                
                 series_exec = ExecucaoExercicio.objects.filter(
                     execucao_treino=execucao,
                     exercicio=ex
                 )
 
-                # Lista de pesos de cada série (para exibir)
+                
                 series_weights = [ce.carga_utilizada for ce in series_exec.order_by('serie')]
 
-                # Agora, para duração do exercício, pegamos o máximo de `duracao` (pois apenas a 1ª série
-                # tinha o tempo total do exercício; demais tinham zero)
+                
                 duracao_total_ex = series_exec.aggregate(max_dur=Max('duracao'))['max_dur'] or 0
 
-                # Estatísticas históricas
+                
                 hist = stats_do_treino.get(ex.id, {'moda': 0, 'maxima': 0})
                 carga_moda = hist['moda']
                 carga_max = hist['maxima']
 
-                # Índice de desempenho: cada série / carga_max
+                
                 for ce in series_exec:
                     if carga_max > 0:
                         perf_indices.append(ce.carga_utilizada / carga_max)
@@ -168,7 +166,7 @@ def historico_treino(request):
                     'exercicios': exercicios_data
                 })
 
-        # 4) Cálculo do desempenho geral
+        
         pct = sum(perf_indices) / len(perf_indices) if perf_indices else 0
         if pct >= 0.9:
             desempenho = 'Ótimo'
@@ -179,7 +177,7 @@ def historico_treino(request):
         else:
             desempenho = 'Ruim'
 
-        # 5) Duração total em minutos da execução (soma das durações dos exercícios)
+        
         duracao_total_seg = execucao.duracao.total_seconds()
         duracao_minutos = int(duracao_total_seg // 60)
 
@@ -214,13 +212,13 @@ def novo_treino(request):
     if request.method == 'POST':
         form = TreinoForm(request.POST)
         if form.is_valid():
-            # 1) Cria o Treino
+            
             treino = Treino.objects.create(
                 nome=form.cleaned_data['nome_treino'],
                 usuario=request.user
             )
 
-            # 2) Para cada grupo...
+            
             grupos = request.POST.getlist('grupos[]')
             for g_idx, nome_grupo in enumerate(grupos):
                 grupo = GrupoMuscular.objects.create(
@@ -228,13 +226,13 @@ def novo_treino(request):
                     nome=nome_grupo
                 )
 
-                # 3) Pega listas de exercícios COM O MESMO ÍNDICE DO GRUPO
+                
                 nomes      = request.POST.getlist(f'exercicios[{g_idx}][nome]')
-                series     = request.POST.getlist(f'exercicios[{g_idx}][series]')    # <– corrigido
+                series     = request.POST.getlist(f'exercicios[{g_idx}][series]')    
                 reps       = request.POST.getlist(f'exercicios[{g_idx}][reps]')
                 descansos  = request.POST.getlist(f'exercicios[{g_idx}][descanso]')
 
-                # 4) Cria cada Exercicio
+                
                 for nome, s, r, d in zip(nomes, series, reps, descansos):
                     Exercicio.objects.create(
                         grupo=grupo,
@@ -258,14 +256,14 @@ def editar_treino(request, pk):
     treino = get_object_or_404(Treino, pk=pk, usuario=request.user)
     
     if request.method == 'POST':
-        # Atualiza nome do treino
+        
         treino.nome = request.POST['nome_treino']
         treino.save()
 
-        # Remove todos os grupos/exercícios existentes
+        
         treino.grupomuscular_set.all().delete()
 
-        # Recria estrutura com novos dados
+        
         grupos = request.POST.getlist('grupos[]')
         for grupo_index, grupo_nome in enumerate(grupos):
             grupo = GrupoMuscular.objects.create(
@@ -308,7 +306,7 @@ def iniciar_treino(request, treino_id):
     apenas este usuário (request.user), não o dono original do treino.
     """
 
-    # 1) Verifica acesso: tenta buscar como treino próprio; se não, verifica compartilhamento
+    
     try:
         treino = Treino.objects.prefetch_related(
             'grupomuscular_set__exercicio_set'
@@ -316,42 +314,42 @@ def iniciar_treino(request, treino_id):
         acesso_proprio = True
         compartilhamento = None
     except Treino.DoesNotExist:
-        # não é treino próprio, busca sem filtrar por usuário
+        
         treino = get_object_or_404(
             Treino.objects.prefetch_related('grupomuscular_set__exercicio_set'),
             id=treino_id
         )
         acesso_proprio = False
-        # checa se esse treino foi compartilhado com request.user
+        
         compartilhamento = CompartilhamentoTreino.objects.filter(
             treino=treino,
             para_usuario=request.user
         ).first()
         if not compartilhamento:
-            # nem é do próprio, nem está compartilhado -> 404
+            
             raise Http404("Você não tem permissão para iniciar este treino.")
 
-    # 2) Monta os grupos e exercícios, já incluindo histórico filtrado por request.user
+    
     grupos_qs = treino.grupomuscular_set.prefetch_related('exercicio_set')
     execution_groups = []
     for grupo in grupos_qs:
         ex_list = []
         for ex in grupo.exercicio_set.all():
-            # Séries
+           
             ex.series_range = range(1, ex.series + 1)
 
-            # Histórico deste exercício, mas apenas para este usuário:
+            
             hist = ExecucaoExercicio.objects.filter(
                 execucao_treino__treino=treino,
                 execucao_treino__usuario=request.user,
                 exercicio=ex
             )
 
-            # Último peso que ESTE usuário utilizou neste exercício  
+            
             last = hist.order_by('-execucao_treino__data_inicio', '-serie').first()
             ex.last_weight = last.carga_utilizada if last else None
 
-            # Peso máximo que ESTE usuário atingiu neste exercício  
+              
             agg = hist.aggregate(m=Max('carga_utilizada'))
             ex.max_weight = agg['m'] if agg['m'] is not None else None
 
@@ -362,20 +360,20 @@ def iniciar_treino(request, treino_id):
             'exercicios': ex_list
         })
 
-    # 3) Se for POST, grava a execução: cada série e a duração total apenas na 1ª série de cada exercício
+    
     if request.method == 'POST':
         execucao = ExecucaoTreino.objects.create(
             treino=treino,
             usuario=request.user
         )
 
-        # Primeiro, coleta as durações totais passadas no form: "duracao_exercicio_<ex_id>"
+        
         duracoes_por_ex = {}
         for key, val in request.POST.items():
             if not key.startswith("duracao_exercicio_"):
                 continue
             parts = key.split("_")
-            # esperamos ["duracao", "exercicio", "<ex_id>"]
+            
             if len(parts) == 3:
                 try:
                     ex_id = int(parts[2])
@@ -390,29 +388,29 @@ def iniciar_treino(request, treino_id):
         soma_tempo = timedelta()
         contador_ser = 0
 
-        # Para cada campo "peso_<ex_id>_<serie>"
-        series_contagem = defaultdict(int)  # conta quantas séries já gravamos por ex_id
+       
+        series_contagem = defaultdict(int)  
         for key, val in request.POST.items():
             if not key.startswith("peso_"):
                 continue
-            # key == "peso_<ex_id>_<serie>"
+            
             try:
                 _, ex_id_str, serie_str = key.split("_")
                 ex_id = int(ex_id_str)
                 serie_num = int(serie_str)
                 carga = float(val) if val else 0.0
             except (ValueError, TypeError):
-                # caso o form tenha algo inválido, pula
+                
                 continue
 
-            # Se for a primeira série deste exercício, usamos a duração total; senão, zero
+            
             dur_totais_seg = duracoes_por_ex.get(ex_id, 0)
             if series_contagem[ex_id] == 0:
                 duracao = timedelta(seconds=dur_totais_seg)
             else:
                 duracao = timedelta(seconds=0)
 
-            # Cria o registro ExecucaoExercicio
+            
             ExecucaoExercicio.objects.create(
                 execucao_treino=execucao,
                 exercicio_id=ex_id,
@@ -432,7 +430,7 @@ def iniciar_treino(request, treino_id):
 
         return redirect('treinos:historico_treino')
 
-    # 4) GET: renderiza o template normalmente
+    
     return render(request, 'treinos/iniciar_treino.html', {
         'treino': treino,
         'execution_groups': execution_groups,
@@ -446,7 +444,7 @@ User = get_user_model()
 def compartilhar_treino(request, treino_id):
     treino = get_object_or_404(Treino, id=treino_id)
 
-    # 1) Recupera todos os amigos do request.user:
+    
     amizades_qs = Amizade.objects.filter(
         Q(usuario1=request.user) | Q(usuario2=request.user)
     )
@@ -457,13 +455,13 @@ def compartilhar_treino(request, treino_id):
         else:
             amigos.append(a.usuario1)
 
-    # 2) Monta uma lista de dicionários: para cada amigo, definimos se "já possui" o treino ou não
+    
     amigos_status = []
     for amigo in amigos:
-        # Verifica se 'amigo' é o dono do treino
+        
         ja_dono = (treino.usuario_id == amigo.id)
 
-        # Verifica se já há um CompartilhamentoTreino (pendente ou aceito) para esse amigo e treino
+        
         existe_compart = CompartilhamentoTreino.objects.filter(
             treino=treino,
             para_usuario=amigo
@@ -477,7 +475,7 @@ def compartilhar_treino(request, treino_id):
         })
 
     if request.method == 'POST':
-        # Faz loop pelos checkboxes enviados
+        
         ids_selecionados = request.POST.getlist('amigos')
         for amigo_id in ids_selecionados:
             try:
@@ -485,11 +483,11 @@ def compartilhar_treino(request, treino_id):
             except User.DoesNotExist:
                 continue
 
-            # Se já possui, ignoramos
+            
             if CompartilhamentoTreino.objects.filter(treino=treino, para_usuario=amigo).exists():
                 continue
 
-            # Cria novo pedido de compartilhamento
+            
             CompartilhamentoTreino.objects.create(
                 treino=treino,
                 de_usuario=request.user,
@@ -555,12 +553,12 @@ def adicionar_treino(request, pk):
     )
 
     if request.method == 'POST':
-        # 1) Cria o novo treino para o request.user
+        
         novo_treino = Treino.objects.create(
             nome=f"{treino_original.nome} (Cópia)",
             usuario=request.user
         )
-        # 2) Copia todos os grupos e exercícios
+        
         for grupo in treino_original.grupomuscular_set.all():
             novo_grupo = GrupoMuscular.objects.create(
                 nome=grupo.nome,
@@ -575,10 +573,10 @@ def adicionar_treino(request, pk):
                     carga_maxima=exercicio.carga_maxima,
                     grupo=novo_grupo
                 )
-        # 3) Redireciona para a página de detalhes do novo treino
+        
         return redirect('treinos:detalhe_treino', pk=novo_treino.pk)
 
-    # Se o método não for POST, redireciona de volta ao detalhe original
+    
     return redirect('treinos:detalhe_treino', pk=treino_original.pk)
 
 
@@ -602,9 +600,7 @@ from amizades.models import PersonalInvite
 
 @login_required
 def analytics(request):
-    # ——— Apenas sobrescreva target_user se:
-    #      a) o usuário atual é PERSONAL e
-    #      b) o GET['usuario_id'] corresponder a um aluno real dele.
+    
     target_user = request.user
     if request.user.profile.is_personal:
         usuario_id = request.GET.get('usuario_id')
@@ -615,21 +611,21 @@ def analytics(request):
                 aluno = None
             if aluno and (aluno in request.user.profile.students.all()):
                 target_user = aluno
-    # — fim da lógica de Personal
+    
 
     user = target_user
 
-    # 1) Todos os treinos (próprios + compartilhados)
+    
     own    = Treino.objects.filter(usuario=user)
     shared = Treino.objects.filter(compartilhamentos__para_usuario=user)
     todos_treinos = list(chain(own, shared))
 
-    # 1.1) Filtro por nome
+    
     q = request.GET.get('q', '').strip()
     if q:
         todos_treinos = [t for t in todos_treinos if q.lower() in t.nome.lower()]
 
-    # 2) Treino selecionado
+    
     treino_id = request.GET.get('treino_id')
     treino = None
     if treino_id:
@@ -648,7 +644,7 @@ def analytics(request):
             'treino': None,
         })
 
-    # 3) Período
+    
     period = request.GET.get('period', 'all')
     hoje = timezone.localtime().date()
     if period == '1w':
@@ -664,7 +660,7 @@ def analytics(request):
     else:
         data_inicio = None
 
-    # 4) Execuções filtradas pelo período
+    
     qs = ExecucaoTreino.objects.filter(treino=treino, usuario=user).order_by('data_inicio')
     if data_inicio:
         qs = qs.filter(data_inicio__date__gte=data_inicio)
@@ -682,16 +678,14 @@ def analytics(request):
     primeira_data = execucoes[0].data_inicio.date()
     ultima_data   = execucoes[-1].data_inicio.date()
 
-    # —————
-    # Helper para gerar gráficos e retornar base64
-    # —————
+   
     def make_chart(x_list, y_list, title, ylabel):
-        # 1) primeiro “empacotamos” e ordenamos pelo próprio x (que são datas)
+        
         paired = sorted(zip(x_list, y_list), key=lambda pair: pair[0])
         xs, ys = zip(*paired)
 
         fig, ax = plt.subplots()
-        ax.plot(xs, ys, marker='o', linestyle='-')  # já estará em ordem cronológica
+        ax.plot(xs, ys, marker='o', linestyle='-')  
 
         loc = AutoDateLocator()
         fmt = DateFormatter('%d/%m/%Y')
@@ -699,7 +693,7 @@ def analytics(request):
         ax.xaxis.set_major_formatter(fmt)
         fig.autofmt_xdate(rotation=45, ha='right')
 
-        # Anotações de cada ponto
+        
         for xi, yi in zip(xs, ys):
             ax.annotate(
                 xi.strftime('%d/%m/%Y'),
@@ -722,16 +716,12 @@ def analytics(request):
         plt.close(fig)
         return base64.b64encode(buf.getvalue()).decode()
 
-    # —————
-    # Carga total por execução
-    # —————
+   
     datas  = [e.data_inicio.date() for e in execucoes]
     cargas = [e.carga_total for e in execucoes]
     chart_carga = make_chart(datas, cargas, "Carga Total por Execução", "Carga (kg)")
 
-    # —————
-    # Total de execuções no período: como é um único ponto, mantemos a mesma lógica
-    # —————
+   
     total_exec = len(execucoes)
     chart_exec_periodo = make_chart(
         [ultima_data],
@@ -740,9 +730,7 @@ def analytics(request):
         "Qtd"
     )
 
-    # —————
-    # Desempenho médio
-    # —————
+  
     hist_items = ExecucaoExercicio.objects.filter(execucao_treino__in=execucoes)
     max_por_ex = defaultdict(int)
     for item in hist_items:
@@ -761,9 +749,7 @@ def analytics(request):
         vals_perf.append(score)
     chart_perf = make_chart(datas_perf, vals_perf, "Desempenho Médio (1=Ruim…4=Ótimo)", "")
 
-    # —————
-    # Grupos musculares (progressão por exercício)
-    # —————
+   
     groups_data = []
     all_items = ExecucaoExercicio.objects.filter(execucao_treino__in=execucoes) \
                                         .select_related('exercicio__grupo')
@@ -809,10 +795,10 @@ from itertools import chain
 
 @login_required
 def treinos_padrao(request):
-    # Busca apenas os treinos que já receberam is_padrao=True
+    
     padroes = Treino.objects.filter(is_padrao=True)
 
-    # Agora precisamos saber quais desses o usuário já duplicou no perfil dele:
+    
     meus_treinos = Treino.objects.filter(usuario=request.user, is_padrao=False)
     por_nome = {t.nome: t.id for t in meus_treinos}
 
@@ -836,20 +822,19 @@ def duplicar_treino_padrao(request, treino_id):
     """
     padrao = get_object_or_404(Treino, id=treino_id, usuario__is_staff=True)
 
-    # Se o usuário já tiver um treino com o mesmo nome (ou seja, já duplicou antes),
-    # só redirecionamos para o detalhe desse treino:
+   
     if Treino.objects.filter(usuario=request.user, nome=padrao.nome).exists():
         user_treino = Treino.objects.get(usuario=request.user, nome=padrao.nome)
         return redirect('treinos:detalhe_treino', pk=user_treino.id)
 
-    # Caso contrário, criamos uma cópia completa:
+    
     user_treino = Treino.objects.create(
         nome=padrao.nome,
         usuario=request.user,
         duracao=padrao.duracao,
         carga_total=padrao.carga_total
     )
-    # Copia todos os grupos & exercícios
+    
     for grupo in padrao.grupomuscular_set.all():
         novo_grupo = GrupoMuscular.objects.create(
             treino=user_treino,
@@ -873,7 +858,7 @@ def duplicar_treino_padrao(request, treino_id):
 def tornar_padrao(request, treino_id):
     treino = get_object_or_404(Treino, pk=treino_id)
 
-    # Só staff pode marcar como padrão
+    
     if not request.user.is_staff:
         return redirect('treinos:detalhe_treino', pk=treino.id)
 

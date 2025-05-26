@@ -24,7 +24,7 @@ class PedidoAmizade(models.Model):
     )
     data_criacao = models.DateTimeField(default=timezone.now)
     aceito = models.BooleanField(default=False)
-    # Você pode adicionar “rejeitado” ou outros estados se quiser.
+    
 
     class Meta:
         unique_together = ('de_usuario', 'para_usuario')
@@ -53,7 +53,7 @@ class Amizade(models.Model):
     data_amizade = models.DateTimeField(default=timezone.now)
 
     class Meta:
-        # Garante que não existam duplicatas (1,2) e (2,1)
+        
         unique_together = (('usuario1', 'usuario2'),)
         ordering = ('-data_amizade',)
 
@@ -68,7 +68,7 @@ class Amizade(models.Model):
         """
         if u1.id == u2.id:
             raise ValueError("Não é possível criar amizade com o mesmo usuário.")
-        # normaliza a ordem
+        
         primeiro, segundo = (u1, u2) if u1.id < u2.id else (u2, u1)
         amizade, criada = cls.objects.get_or_create(usuario1=primeiro, usuario2=segundo)
         return amizade

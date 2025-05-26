@@ -1,23 +1,23 @@
 .exercise-details-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 colunas iguais */
+    grid-template-columns: repeat(3, 1fr); 
     gap: 1rem;
     margin-top: 2rem;
-    align-items: end; /* Para alinhar os campos pela base */
+    align-items: end; 
     
   }
   
   .exer-name-field {
-    grid-column: 1 / -1; /* Nome do exercício ocupa a linha inteira */
+    grid-column: 1 / -1; 
     margin-bottom: 1.5rem;
   }
   
   .input-field input {
-    height: 50px; /* Aumenta altura */
-    font-size: 1.2rem; /* Aumenta texto */
+    height: 50px; 
+    font-size: 1.2rem; 
   }
   .exercicio-item .exer-name-field {
-    margin-bottom: 0;    /* zera o espaço extra abaixo do input de nome */
+    margin-bottom: 0;    
   }
   
   

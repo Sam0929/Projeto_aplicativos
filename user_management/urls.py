@@ -1,4 +1,4 @@
-# user_management/urls.py  (root)
+
 from django.contrib import admin
 from django.urls import path, include
 from users.views import CustomLoginView, ResetPasswordView, ChangePasswordView, home
@@ -11,7 +11,7 @@ from django.urls import re_path
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    path('', home, name='home'),  # Rota para a página inicial
+    path('', home, name='home'),  
 
     path('treinos/', include('treinos.urls', namespace='treinos')),
     path('amizades/', include('amizades.urls', namespace='amizades')),

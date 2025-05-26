@@ -11,7 +11,7 @@ class Treino(models.Model):
     
     duracao = models.DurationField(default=timedelta(0))
     carga_total = models.FloatField(default=0.0)
-    is_padrao = models.BooleanField(default=False)  # ← novo campo para marcar “Treino Padrão”
+    is_padrao = models.BooleanField(default=False)  
     
     @property
     def total_exercicios(self):
@@ -19,11 +19,11 @@ class Treino(models.Model):
 
     @property
     def ultima_execucao(self):
-        # Por hora, retorna a própria criação — ajuste depois com histórico real
+       
         return self.criado_em
     
     def duracao_minutos(self):
-        # Se quiser lidar com dias, some também: self.duracao.days*24*60
+       
         return self.duracao.seconds // 60
 
     def __str__(self):
@@ -46,14 +46,14 @@ class ExecucaoTreino(models.Model):
     usuario     = models.ForeignKey(User, on_delete=models.CASCADE)
     data_inicio = models.DateTimeField(default=timezone.now)
     duracao     = models.DurationField(default=timedelta(0))
-    carga_total = models.FloatField(default=0.0)  # aqui guarda a carga média (ou total, como preferir)
+    carga_total = models.FloatField(default=0.0)  
 
     def __str__(self):
         return f"{self.treino.nome} em {self.data_inicio:%d/%m/%Y %H:%M}"
 
     @property
     def duracao_minutos(self):
-        # Retorna apenas os minutos inteiros
+      
         return self.duracao.seconds // 60
 
 class ExecucaoExercicio(models.Model):

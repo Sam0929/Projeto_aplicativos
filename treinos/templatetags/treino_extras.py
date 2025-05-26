@@ -1,4 +1,4 @@
-# treinos/templatetags/treino_extras.py
+
 
 from django import template
 
