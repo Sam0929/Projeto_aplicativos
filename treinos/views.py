@@ -126,7 +126,7 @@ def historico_treino(request):
         perf_indices = []
         grupos_data = []
 
-        # Para cada grupo muscular
+        # Destinado a cada grupo muscular
         for grupo in execucao.treino.grupomuscular_set.all().prefetch_related('exercicio_set'):
             exercicios_data = []
 
