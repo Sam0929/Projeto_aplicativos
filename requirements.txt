@@ -19,3 +19,4 @@ social-auth-app-django
 social-auth-core
 sqlparse
 urllib3
+matplotlib
